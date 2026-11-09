@@ -9,7 +9,6 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderDone from './pages/OrderDone';
 import Track from './pages/Track';
-import Admin from './pages/Admin';
 import Wishlist from './pages/Wishlist';
 import {useFavorites} from './lib/favorites';
 import './styles-startech.css';
@@ -74,7 +73,6 @@ function Shell() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/done/:no" element={<OrderDone />} />
                 <Route path="/track" element={<Track />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<div className="closed"><b>Page not found</b><Link className="btn" to="/">Go to the shop</Link></div>} />
               </Routes>
@@ -90,7 +88,7 @@ function Shell() {
             {shop?.tel && <p>Tel: <a href={`tel:${shop.tel}`}>{shop.tel}</a></p>}
             {shop?.email && <p>Email: <a href={`mailto:${shop.email}`}>{shop.email}</a></p>}
           </div>
-          <div><h3>Orders</h3><p><Link to="/admin">Store administration</Link></p><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
+          <div><h3>Orders</h3><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
         </div>
         <p className="powered">Electronics E-commerce · Independent Store</p>
       </footer>
