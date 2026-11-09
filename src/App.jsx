@@ -10,6 +10,8 @@ import Checkout from './pages/Checkout';
 import OrderDone from './pages/OrderDone';
 import Track from './pages/Track';
 import Admin from './pages/Admin';
+import Wishlist from './pages/Wishlist';
+import {useFavorites} from './lib/favorites';
 import './styles-startech.css';
 
 export default function App() {
@@ -18,6 +20,7 @@ export default function App() {
 
 function Shell() {
   const { catalog, error, load, theme, toggleTheme, cart, toasts } = useShop();
+  const favoriteCount=useFavorites(s=>s.ids.length);
   const navigate = useNavigate();
   const location = useLocation();
   const [q, setQ] = useState('');
@@ -50,13 +53,14 @@ function Shell() {
             <SearchIcon />
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, brands, models" aria-label="Search products" />
           </form>
+          <Link to="/wishlist" className="icon-btn" aria-label={`Wishlist, ${favoriteCount} saved`}>♡{favoriteCount>0&&<span className="cart-count">{favoriteCount}</span>}</Link>
           <button type="button" className="icon-btn" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}><ThemeIcon dark={theme === 'dark'} /></button>
           <Link to="/cart" className="icon-btn" aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}>
             <CartIcon />{count > 0 && <span className="cart-count">{count > 99 ? '99+' : count}</span>}
           </Link>
         </div>
       </header>
-      <nav className="category-nav"><div className="wrap"><Link to="/products" className="nav-special">☰ All Products</Link>{["Laptop","Desktop","Monitor","Networking","Accessories","Components","Storage","Security"].map(n=><Link key={n} to={`/products?g=${encodeURIComponent(n)}`}>{n}</Link>)}<Link to="/track">Track Order</Link></div></nav>
+      <nav className="category-nav"><div className="wrap"><Link to="/products" className="nav-special">☰ All Products</Link>{(catalog?.groups?.length?catalog.groups.map(g=>({id:g.id,name:g.name})):["Laptop","Desktop","Monitor","Networking","Accessories","Components","Storage","Security"].map(name=>({id:name,name}))).map(g=><Link key={g.id} to={`/products?g=${encodeURIComponent(g.id)}`}>{g.name}</Link>)}<Link to="/track">Track Order</Link></div></nav>
       <main>
         <div className="wrap">
           {!catalog ? (error ? <div className="closed"><b>The shop could not be loaded</b><p className="muted">{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div> : <Spinner label="Loading the shop" />)
@@ -71,6 +75,7 @@ function Shell() {
                 <Route path="/done/:no" element={<OrderDone />} />
                 <Route path="/track" element={<Track />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="*" element={<div className="closed"><b>Page not found</b><Link className="btn" to="/">Go to the shop</Link></div>} />
               </Routes>
             )}
