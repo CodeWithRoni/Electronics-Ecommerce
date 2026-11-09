@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { imageUrl } from '../lib/api';
 import { useShop } from '../lib/store';
 import { money } from '../lib/format';
+import {useFavorites} from '../lib/favorites';
 
 export const SearchIcon = () => <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>;
 export const CartIcon = () => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2.5 3.5h3l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6.6" /></svg>;
@@ -32,8 +33,11 @@ export function StockBadge({ p }) {
 
 export function ProductCard({ p, brand, currency }) {
   const add = useShop((s) => s.add);
+  const liked=useFavorites(s=>s.ids.includes(p.id));
+  const toggle=useFavorites(s=>s.toggle);
   return (
     <article className="pcard">
+      <button type="button" className={`favorite-btn ${liked?'liked':''}`} onClick={()=>toggle(p.id)} aria-label={liked?'Remove from wishlist':'Add to wishlist'} aria-pressed={liked}>{liked?'♥':'♡'}</button>
       <Link to={`/p/${p.id}`} aria-label={p.name}>
         <Photo product={p} width={400} />
         <div className="pcard-body">
