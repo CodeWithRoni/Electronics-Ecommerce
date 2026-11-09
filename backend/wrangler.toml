@@ -5,4 +5,4 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "electronics-ecommerce"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "1a51d7b5-e4ef-49e5-8f75-6587549f8a38"
