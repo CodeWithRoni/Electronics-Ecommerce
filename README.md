@@ -1,38 +1,42 @@
-# Electronics E-commerce — Independent Store
+# Electronics E-commerce
 
-This is a standalone electronics e-commerce project. **It does not call, read, or write Karvio or its Google Apps Script backend.**
+Independent Bangladesh electronics retail website with an original visual identity, familiar marketplace navigation and **no Karvio ERP connection**.
 
-## Architecture
-- React + Vite frontend, hosted independently on GitHub Pages.
-- Independent Cloudflare Worker API in `backend/src/index.js`.
-- Independent Cloudflare D1 SQLite database in `backend/schema.sql`.
-- Catalog, checkout, order tracking, product inventory, and order administration.
-- Payments: Cash on Delivery; optional manual bKash reference collection (not an automated payment verification).
+## Live
+- [Storefront](https://codewithroni.github.io/Electronics-Ecommerce/)
+- [Admin panel](https://codewithroni.github.io/Electronics-Ecommerce/#/admin)
+- API: https://electronics-ecommerce-api.ahroni-usa.workers.dev/
+
+## Repository structure
+```
+src/
+  App.jsx                Navigation and routes
+  components/            Shared product components
+  pages/                 Home, Products, Product, Wishlist, Cart, Checkout, Track, Admin
+  lib/                   API client, cart/catalog store, wishlist
+  styles.css             Shared responsive styles
+  styles-startech.css    Electronics retail theme
+backend/
+  src/index.js           Independent Cloudflare Worker API
+  migrations/            Cloudflare D1 schema migrations
+  wrangler.toml          Worker and D1 binding
+.github/workflows/       Pages, Worker, and database deployment
+```
 
 ## Setup
-1. Install Node.js 22 and run `npm ci`.
-2. Create a Cloudflare account and install Wrangler: `npm install -g wrangler`, then `wrangler login`.
-3. Create a **new, independent** D1 database: `wrangler d1 create electronics-ecommerce`. Copy its database ID into `backend/wrangler.toml`.
-4. Initialize the schema: `cd backend && wrangler d1 execute electronics-ecommerce --remote --file=schema.sql`.
-5. Create an admin secret: `cd backend && wrangler secret put ADMIN_TOKEN`. Use a long random secret.
-6. Set Worker variables in Cloudflare for `SHOP_NAME`, `SHOP_PHONE`, `SHOP_ADDRESS`, `ALLOWED_ORIGIN` (your storefront origin), `DELIVERY_INSIDE`, `DELIVERY_OUTSIDE`; optionally `BKASH_NUMBER`.
-7. Deploy: `cd backend && wrangler deploy`.
-8. In GitHub repository Settings → Secrets and variables → Actions → Variables, create `VITE_API_URL` with your Worker URL. For local development create `.env.local` containing `VITE_API_URL=https://YOUR-WORKER.workers.dev`.
-9. Run `npm run dev` locally. The existing GitHub Pages workflow deploys frontend changes from `main`.
+```sh
+npm ci
+npm run dev
+npm run build
+```
+Set `VITE_API_URL` in `.env.local` for local development. GitHub Pages deploys on main branch pushes. Worker deployment uses GitHub Secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Database migrations are manually approved: see `backend/MIGRATIONS.md`.
 
-**Important:** Without deploying the independent Worker and setting `VITE_API_URL`, the storefront intentionally shows a configuration error rather than silently connecting to Karvio. No fake orders are recorded.
+## Admin
+At `/#/admin`, enter the Cloudflare Worker `ADMIN_TOKEN` secret. The admin interface keeps it in memory, not browser storage. Admin can edit products, prices, stock, image URLs and order status. Never commit the token.
 
-## Admin API
-Send JSON POST to the Worker with header `Authorization: Bearer YOUR_ADMIN_TOKEN`:
-- `{"action":"admin.products"}` — list inventory
-- `{"action":"admin.product.upsert","payload":{"product":{"id":"router-1","name":"Router","price":1500,"stock":10,"group_id":"Networking"}}}`
-- `{"action":"admin.orders"}` — list orders
-- `{"action":"admin.order.status","payload":{"order_no":"EE-...","status":"confirmed"}}`
+## Features and limitations
+Implemented: responsive catalog, category navigation, search, filters, sorting, wishlist, cart, checkout, manual bKash reference, order tracking, inventory and order admin.
 
-Do not put the admin token in frontend source code, `.env` files committed to Git, or browser local storage. Use a secure private admin client.
+Not yet implemented: PC builder, comparisons, user accounts, reviews, coupons, image file uploads, automated payment verification, advanced specification filters, robust stock reservation and production rate limiting. Do not accept real orders until checkout and stock handling have been tested.
 
-## Operations and limitations
-- This is a new empty database: **Karvio products/orders are not migrated**.
-- The storefront must not accept real orders until the Worker, database, inventory and payment settings have been configured and tested.
-- bKash references are recorded for manual checking; no automatic payment confirmation is provided.
-- For a production launch, add rate limiting, monitoring, backups, transactional stock reservations, and a dedicated authenticated admin UI.
+The layout is independently authored; no Star Tech logos, images, or brand identity are used.
