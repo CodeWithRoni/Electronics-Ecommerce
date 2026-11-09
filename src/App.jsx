@@ -9,6 +9,8 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderDone from './pages/OrderDone';
 import Track from './pages/Track';
+import Admin from './pages/Admin';
+import './styles-startech.css';
 
 export default function App() {
   return <HashRouter><Shell /></HashRouter>;
@@ -37,6 +39,7 @@ function Shell() {
   return (
     <>
       {shop?.notice && shop.open && <div className="notice" role="note">{shop.notice}</div>}
+      <div className="top-utility"><div className="wrap"><span>Welcome to your technology store</span><span>Computer · Components · Accessories</span></div></div>
       <header className="top">
         <div className="wrap">
           <Link to="/" className="brand" aria-label={`${shop?.name || 'Shop'} home`}>
@@ -53,6 +56,7 @@ function Shell() {
           </Link>
         </div>
       </header>
+      <nav className="category-nav"><div className="wrap"><Link to="/products" className="nav-special">☰ All Products</Link>{["Laptop","Desktop","Monitor","Networking","Accessories","Components","Storage","Security"].map(n=><Link key={n} to={`/products?g=${encodeURIComponent(n)}`}>{n}</Link>)}<Link to="/track">Track Order</Link></div></nav>
       <main>
         <div className="wrap">
           {!catalog ? (error ? <div className="closed"><b>The shop could not be loaded</b><p className="muted">{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div> : <Spinner label="Loading the shop" />)
@@ -66,6 +70,7 @@ function Shell() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/done/:no" element={<OrderDone />} />
                 <Route path="/track" element={<Track />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="*" element={<div className="closed"><b>Page not found</b><Link className="btn" to="/">Go to the shop</Link></div>} />
               </Routes>
             )}
@@ -80,7 +85,7 @@ function Shell() {
             {shop?.tel && <p>Tel: <a href={`tel:${shop.tel}`}>{shop.tel}</a></p>}
             {shop?.email && <p>Email: <a href={`mailto:${shop.email}`}>{shop.email}</a></p>}
           </div>
-          <div><h3>Orders</h3><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
+          <div><h3>Orders</h3><p><Link to="/admin">Store administration</Link></p><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
         </div>
         <p className="powered">Electronics E-commerce · Independent Store</p>
       </footer>

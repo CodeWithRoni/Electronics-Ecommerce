@@ -1,5 +1,11 @@
 name: Deploy independent Cloudflare Worker API
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/**'
+      - 'backend/wrangler.toml'
+      - '.github/workflows/cloudflare-worker.yml'
   workflow_dispatch:
 permissions:
   contents: read
