@@ -1,8 +1,8 @@
 {
-  "name": "karvio-shop",
+  "name": "electronics-ecommerce",
   "private": true,
-  "version": "1.0.0",
-  "description": "Online shop website connected to Karvio ERP (products, prices and stock from the shop's own Karvio)",
+  "version": "2.0.0",
+  "description": "Independent electronics marketplace with Cloudflare D1 and secure admin panel",
   "type": "module",
   "scripts": {
     "dev": "vite",
