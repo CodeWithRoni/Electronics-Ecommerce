@@ -12,7 +12,7 @@ export default function Home() {
     <>
       <section className="hero">
         <h1>{shop.name}</h1>
-        <p>Computer, IT and networking products with real warranty. Order online and get it delivered — prices and stock come straight from our shop.</p>
+        <p>Computer, IT and networking products with real warranty. Order online and get it delivered — browse our independent online catalog.</p>
         <div className="hero-points">
           {shop.cod && <span>Cash on delivery</span>}
           {shop.bkash.enabled && <span>bKash payment</span>}

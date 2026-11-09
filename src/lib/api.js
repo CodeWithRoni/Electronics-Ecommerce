@@ -1,18 +1,18 @@
-import { API_URL, IMAGE_BASE } from '../config';
-
-/** POST to the Karvio backend. text/plain avoids the CORS pre-flight Apps Script cannot answer. */
+import { API_URL } from '../config';
 export async function api(action, payload = {}) {
+  if (!API_URL) throw new Error('Store backend is not configured yet. Set VITE_API_URL to your independent API endpoint.');
   let res;
   try {
-    res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload }) });
-  } catch {
-    throw new Error('No internet connection. Please check your connection and try again.');
-  }
+    res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
+  } catch { throw new Error('Cannot reach the store server. Check your internet connection.'); }
   let body;
-  try { body = await res.json(); } catch { throw new Error('The shop could not be reached. Please try again in a moment.'); }
-  if (!body.ok) throw new Error(body.error || 'Something went wrong');
+  try { body = await res.json(); } catch { throw new Error('The store server returned an invalid response.'); }
+  if (!res.ok || !body.ok) throw new Error(body.error || 'Request failed');
   return body.data;
 }
-
-export const imageUrl = (id, width = 600) => `${IMAGE_BASE}${encodeURIComponent(id)}=w${width}`;
+export const imageUrl = (id) => {
+  if (!id) return '';
+  if (/^https:\/\//i.test(id)) return id;
+  return '';
+};
 export const newRef = () => (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^\w-]/g, '');

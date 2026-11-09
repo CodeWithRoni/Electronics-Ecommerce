@@ -5,7 +5,7 @@ import { api, newRef } from '../lib/api';
 import { money, qty as fqty, bdPhone } from '../lib/format';
 import { Empty } from '../components/ui';
 
-const SAVED = 'karvio_shop_customer'; // name / phone / address remembered on this device for the next order
+const SAVED = 'electronics_shop_customer'; // name / phone / address remembered on this device for the next order
 const readSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED)) || {}; } catch { return {}; } };
 
 export default function Checkout() {
@@ -52,7 +52,7 @@ export default function Checkout() {
         items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty }))
       });
       try { localStorage.setItem(SAVED, JSON.stringify({ name: f.name.trim(), phone: bdPhone(f.phone), address: f.address.trim(), area: f.area })); } catch { /* private mode */ }
-      try { sessionStorage.setItem(`karvio_order_${r.order_no}`, JSON.stringify({ ...r, phone: bdPhone(f.phone), lines: lines.map((l) => ({ name: l.product.name, qty: l.qty, unit: l.product.unit, total: l.qty * l.product.price })) })); } catch { /* fine */ }
+      try { sessionStorage.setItem(`electronics_order_${r.order_no}`, JSON.stringify({ ...r, phone: bdPhone(f.phone), lines: lines.map((l) => ({ name: l.product.name, qty: l.qty, unit: l.product.unit, total: l.qty * l.product.price })) })); } catch { /* fine */ }
       clearCart();
       load();
       navigate(`/done/${r.order_no}`, { replace: true });

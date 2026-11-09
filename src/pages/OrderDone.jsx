@@ -5,7 +5,7 @@ import { money, qty as fqty } from '../lib/format';
 export default function OrderDone() {
   const { no } = useParams();
   const shop = useShop((s) => s.catalog.shop);
-  let o = null; try { o = JSON.parse(sessionStorage.getItem(`karvio_order_${no}`)); } catch { o = null; }
+  let o = null; try { o = JSON.parse(sessionStorage.getItem(`electronics_order_${no}`)); } catch { o = null; }
   return (
     <div className="card okbox" style={{ maxWidth: 620, margin: '0 auto' }}>
       <div className="tick" aria-hidden="true">✓</div>

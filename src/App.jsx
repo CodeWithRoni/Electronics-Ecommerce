@@ -40,7 +40,7 @@ function Shell() {
       <header className="top">
         <div className="wrap">
           <Link to="/" className="brand" aria-label={`${shop?.name || 'Shop'} home`}>
-            <img src="./karvio-mark.png" alt="" />
+            <span aria-hidden="true" style={{fontSize:28}}>⚡</span>
             <span><b>{shop?.name || 'Online Shop'}</b><small>Computer · IT · Networking</small></span>
           </Link>
           <form className="search" role="search" onSubmit={search}>
@@ -82,7 +82,7 @@ function Shell() {
           </div>
           <div><h3>Orders</h3><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
         </div>
-        <p className="powered">Powered by Karvio</p>
+        <p className="powered">Electronics E-commerce · Independent Store</p>
       </footer>
       <div className="toasts" aria-live="polite">{toasts.map((t) => <div key={t.id} className={`toast ${t.kind === 'err' ? 'err' : ''}`}>{t.msg}</div>)}</div>
     </>

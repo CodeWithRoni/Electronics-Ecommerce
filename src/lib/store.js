@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { api } from './api';
 
-const CART = 'karvio_shop_cart', THEME = 'karvio_shop_theme', CATALOG = 'karvio_shop_catalog';
+const CART = 'electronics_shop_cart', THEME = 'electronics_shop_theme', CATALOG = 'electronics_shop_catalog';
 const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
 const systemTheme = () => (globalThis.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark');

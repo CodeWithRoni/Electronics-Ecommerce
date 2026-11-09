@@ -1,41 +1,38 @@
-# Karvio Shop
+# Electronics E-commerce — Independent Store
 
-The online shop website for a shop that runs **Karvio** (POS & shop management).
-Products, prices, stock and pictures come straight from Karvio; orders go back into Karvio's
-**Online Orders** page.
+This is a standalone electronics e-commerce project. **It does not call, read, or write Karvio or its Google Apps Script backend.**
 
-Live: https://codewithroni.github.io/karvio-shop/
+## Architecture
+- React + Vite frontend, hosted independently on GitHub Pages.
+- Independent Cloudflare Worker API in `backend/src/index.js`.
+- Independent Cloudflare D1 SQLite database in `backend/schema.sql`.
+- Catalog, checkout, order tracking, product inventory, and order administration.
+- Payments: Cash on Delivery; optional manual bKash reference collection (not an automated payment verification).
 
-## How it works
+## Setup
+1. Install Node.js 22 and run `npm ci`.
+2. Create a Cloudflare account and install Wrangler: `npm install -g wrangler`, then `wrangler login`.
+3. Create a **new, independent** D1 database: `wrangler d1 create electronics-ecommerce`. Copy its database ID into `backend/wrangler.toml`.
+4. Initialize the schema: `cd backend && wrangler d1 execute electronics-ecommerce --remote --file=schema.sql`.
+5. Create an admin secret: `cd backend && wrangler secret put ADMIN_TOKEN`. Use a long random secret.
+6. Set Worker variables in Cloudflare for `SHOP_NAME`, `SHOP_PHONE`, `SHOP_ADDRESS`, `ALLOWED_ORIGIN` (your storefront origin), `DELIVERY_INSIDE`, `DELIVERY_OUTSIDE`; optionally `BKASH_NUMBER`.
+7. Deploy: `cd backend && wrangler deploy`.
+8. In GitHub repository Settings → Secrets and variables → Actions → Variables, create `VITE_API_URL` with your Worker URL. For local development create `.env.local` containing `VITE_API_URL=https://YOUR-WORKER.workers.dev`.
+9. Run `npm run dev` locally. The existing GitHub Pages workflow deploys frontend changes from `main`.
 
-- **Backend:** the same Google Apps Script web app as Karvio (`src/config.js` → `API_URL`).
-  The website uses only the public routes `shop.catalog`, `shop.order.create` and `shop.order.track`;
-  it never sees cost prices or stock counts.
-- **Google Drive:** Karvio → Settings → Online shop → *Set up Google Drive folder* creates
-  `Karvio Shop` › `Images` (product pictures) and `Karvio Shop Database` (orders).
-- **Products on the website:** in Karvio, edit a product, tick *Show on the online shop* and add pictures.
-- **Payment:** cash on delivery and bKash (the customer sends money and types the TrxID; the shop checks it).
-- **Orders:** Karvio → Online Orders → *Open in POS* → complete the sale. The sale confirms the order
-  and moves stock; then *Mark shipped* / *Mark delivered*. Customers follow it on *Track your order*.
+**Important:** Without deploying the independent Worker and setting `VITE_API_URL`, the storefront intentionally shows a configuration error rather than silently connecting to Karvio. No fake orders are recorded.
 
-## Develop
+## Admin API
+Send JSON POST to the Worker with header `Authorization: Bearer YOUR_ADMIN_TOKEN`:
+- `{"action":"admin.products"}` — list inventory
+- `{"action":"admin.product.upsert","payload":{"product":{"id":"router-1","name":"Router","price":1500,"stock":10,"group_id":"Networking"}}}`
+- `{"action":"admin.orders"}` — list orders
+- `{"action":"admin.order.status","payload":{"order_no":"EE-...","status":"confirmed"}}`
 
-```bash
-npm install
-npm run dev        # http://localhost:5173
-npm run build      # dist/
-```
+Do not put the admin token in frontend source code, `.env` files committed to Git, or browser local storage. Use a secure private admin client.
 
-Tests run the site against Karvio's in-memory test backend (a checkout of CodeWithRoni/karvio):
-
-```bash
-KARVIO_REPO=../karvio npx playwright test
-```
-
-## Publish
-
-Every push to `main` builds the site and publishes it to the `gh-pages` branch
-(`.github/workflows/deploy.yml`). GitHub Pages serves that branch:
-Settings → Pages → *Deploy from a branch* → `gh-pages` / `(root)`.
-
-React 18 · Vite · React Router · Zustand
+## Operations and limitations
+- This is a new empty database: **Karvio products/orders are not migrated**.
+- The storefront must not accept real orders until the Worker, database, inventory and payment settings have been configured and tested.
+- bKash references are recorded for manual checking; no automatic payment confirmation is provided.
+- For a production launch, add rate limiting, monitoring, backups, transactional stock reservations, and a dedicated authenticated admin UI.

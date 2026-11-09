@@ -1,19 +1,13 @@
-# Builds the shop website on every push to main and publishes it to the gh-pages branch.
-# GitHub Pages serves that branch: Settings → Pages → Source: Deploy from a branch → gh-pages / (root).
-name: Deploy shop to GitHub Pages
-
+name: Deploy Electronics E-commerce to GitHub Pages
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
-
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -21,14 +15,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
           cache: npm
-      - name: Build
+      - name: Build independent storefront
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           npm ci
           npm run build
           touch dist/.nojekyll
-      - name: Publish dist to the gh-pages branch
+      - name: Publish
         working-directory: dist
         run: |
           git init -q -b gh-pages
