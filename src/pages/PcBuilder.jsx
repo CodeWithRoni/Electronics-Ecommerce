@@ -1,9 +1,11 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RetailIcon } from '../components/retail';
+import { downloadBuildImage, PcBuildPrint } from '../components/PcBuildExport';
 import { API_URL } from '../config';
 import { brandLogo } from '../lib/brand';
 import { money } from '../lib/format';
+import { footerSettings } from '../lib/footer';
 import { buildCompatibility, corePcSlots, pcSlots, peripheralPcSlots, productSlot } from '../lib/pcBuilder';
 import { useShop } from '../lib/store';
 
@@ -22,38 +24,6 @@ function savedBuild(key = storageKey) {
   } catch { return {}; }
 }
 
-function downloadBuildImage(shopName, rows, total) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1240;
-  canvas.height = 190 + rows.length * 62;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#101629';
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillText(`${shopName} PC Build`, 40, 62, 1120);
-  rows.forEach(({ label, name, price }, index) => {
-    const y = 94 + 62 * index;
-    ctx.fillStyle = index % 2 ? '#fff' : '#f1f3f7';
-    ctx.fillRect(32, y, 1176, 62);
-    ctx.fillStyle = '#18243a';
-    ctx.font = 'bold 21px sans-serif';
-    ctx.fillText(label, 48, y + 38, 185);
-    ctx.font = '22px sans-serif';
-    ctx.fillText(name, 250, y + 38, 765);
-    ctx.textAlign = 'right';
-    ctx.fillText(price, 1188, y + 38, 150);
-    ctx.textAlign = 'left';
-  });
-  ctx.fillStyle = '#1f4987';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillText(`Total: ${total}`, 48, canvas.height - 36);
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = 'geargrid-pc-build.png';
-  link.click();
-}
-
 export default function PcBuilder() {
   const { shop, groups, products, settings } = useShop((state) => state.catalog);
   const addBuild = useShop((state) => state.addBuild);
@@ -64,6 +34,7 @@ export default function PcBuilder() {
   const [hideEmpty, setHideEmpty] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [exporting, setExporting] = useState(false);
   const dialog = useRef(null);
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(selected)); } catch { /* storage unavailable */ }
@@ -84,6 +55,21 @@ export default function PcBuilder() {
   const checks = buildCompatibility(parts);
   const mismatch = checks.some(({ type }) => type === 'error');
   const total = money(chosen.reduce((sum, part) => sum + Number(part.price), 0), shop.currency);
+  const regularPrice = (part) => Math.max(Number(part.price), Number(part.compare_at_price) || 0);
+  const footer = footerSettings(settings, shop);
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '/pc-builder';
+  const exportData = {
+    name: footer.company || shop.name,
+    contact: [footer.phone && `Phone: ${footer.phone}`, footer.email && `Email: ${footer.email}`].filter(Boolean).join(' · '),
+    url: url.href,
+    rows: pcSlots.map(({ id, label }) => {
+      const part = parts[id];
+      return { id, cells: [label, part?.name || '', part ? money(part.price, shop.currency) : '', part ? money(regularPrice(part), shop.currency) : ''] };
+    }),
+    totals: [total, money(chosen.reduce((sum, part) => sum + regularPrice(part), 0), shop.currency)],
+  };
   const powered = powerSlots.map((id) => parts[id]).filter(Boolean);
   const watts = powered.map((part) => part.pc_specs?.watts).filter((value) => Number.isFinite(value) && value >= 0);
   const change = (value) => { setSelected(value); setError(''); setNotice(''); };
@@ -95,7 +81,7 @@ export default function PcBuilder() {
   };
 
   return <div className="builder-page">
-    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link><span>/</span><span>PC Builder</span></nav>
+    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home"><RetailIcon name="home-solid" size={15} /></Link><span aria-hidden="true">/</span><span>PC Builder</span></nav>
     <section className="builder-sheet">
       <header className="builder-actions">
         <span className="builder-brand"><img src={settings?.header_logo || brandLogo} alt={shop.name} /></span>
@@ -109,9 +95,13 @@ export default function PcBuilder() {
             } catch { setError('This browser could not save your build.'); }
           }}><RetailIcon name="storage" size={19} />Save PC</button>
           <button type="button" onClick={() => window.print()}><RetailIcon name="printer" size={19} />Print</button>
-          <button type="button" disabled={!chosen.length} onClick={() => downloadBuildImage(shop.name, pcSlots.filter(({ id }) => parts[id]).map(({ id, label }) => ({
-            label, name: parts[id].name, price: money(parts[id].price, shop.currency),
-          })), total)}><RetailIcon name="camera" size={19} />Screenshot</button>
+          <button type="button" disabled={exporting} onClick={async () => {
+            setError('');
+            setExporting(true);
+            try { await downloadBuildImage(exportData); }
+            catch { setError('This browser could not export the build image.'); }
+            finally { setExporting(false); }
+          }}><RetailIcon name="camera" size={19} />Screenshot</button>
         </div>
       </header>
       <div className="builder-content">
@@ -124,11 +114,9 @@ export default function PcBuilder() {
         </div>
         {slotGroups.map(({ title, slots }) => {
           const visibleSlots = slots.filter(({ id }) => !hideEmpty || selected[id]);
-          if (!visibleSlots.length) return null;
-
           return <Fragment key={title}>
             <h2>{title}</h2>
-            <section aria-label={title}>
+            {visibleSlots.length > 0 && <section aria-label={title}>
               {visibleSlots.map(({ id, label, icon, required }) => {
                 const part = parts[id];
                 return <div className="builder-slot" key={id}>
@@ -144,22 +132,23 @@ export default function PcBuilder() {
                   </div>
                 </div>;
               })}
-            </section>
+            </section>}
           </Fragment>;
         })}
         <div className="builder-notes">
-          {missing.length > 0 && <p>Core parts still to choose: {missing.join(', ')}.</p>}
+          {!hideEmpty && missing.length > 0 && <p>Core parts still to choose: {missing.join(', ')}.</p>}
           {unavailable && <p role="alert">Remove or replace unavailable selections before adding your parts.</p>}
           <ul className="builder-checks">{checks.map(({ type, message }) => <li key={message} data-status={type}>{message}</li>)}</ul>
-          <p>Compatibility checks cover CPU socket and RAM type when specs are available. Confirm power and case clearance separately.</p>
+          {!hideEmpty && <p>Compatibility checks cover CPU socket and RAM type when specs are available. Confirm power and case clearance separately.</p>}
           {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
-          <div className="builder-secondary">
+          {(!hideEmpty || Object.values(selected).some(Boolean) || Object.values(saved).some(Boolean)) && <div className="builder-secondary">
             <button type="button" className="btn" disabled={!Object.values(selected).some(Boolean)} onClick={() => change({})}>Clear build</button>
             {Object.values(saved).some(Boolean) && <button type="button" className="btn" onClick={() => change(saved)}>Load saved PC</button>}
-          </div>
+          </div>}
         </div>
       </div>
     </section>
+    <PcBuildPrint {...exportData} />
     <dialog className="builder-picker" ref={dialog} onClose={() => setChoosing('')}>
       <header><h2>Choose {pcSlots.find(({ id }) => id === choosing)?.label}</h2><button type="button" className="btn" onClick={close}>Close</button></header>
       {options[choosing]?.length ? <ul>{options[choosing].map((product) => <li key={product.id}>

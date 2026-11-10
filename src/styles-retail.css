@@ -371,9 +371,28 @@
   .builder-part-price { grid-column: 2; grid-row: 2; }
   .builder-slot-actions { grid-column: 3; grid-row: 1 / span 2; }
 }
+.builder-page .crumbs { display: flex; align-items: center; gap: 8px; }
+.builder-page .crumbs svg { display: block; }
+.builder-content > h2 + h2 { margin-top: 0; }
+.builder-print { display: none; }
+
+@page pc-build { size: A4 portrait; margin: 12mm; }
 @media print {
-  .retail-shell:has(.builder-sheet) { background: white; color: black; }
-  .retail-shell:has(.builder-sheet) :is(.retail-header, .notice, .store-footer, .toasts, .crumbs, .builder-actions button, .builder-meta .check, .builder-slot-actions, .builder-secondary) { display: none; }
-  .builder-sheet { width: 100%; margin: 0; border: none; }
-  .builder-slot { break-inside: avoid; }
+  html:has(.builder-print), body:has(.builder-print), .retail-shell:has(.builder-print) { background: #fff; color: #18243a; color-scheme: light; }
+  .retail-shell:has(.builder-print) > :not(main), .builder-page > :not(.builder-print) { display: none; }
+  .retail-shell main:has(.builder-print), .retail-shell main:has(.builder-print) > .wrap { min-height: 0; max-width: none; padding: 0; margin: 0; }
+  .builder-print { display: block; page: pc-build; font: 10pt Arial, sans-serif; overflow-wrap: anywhere; }
+  .builder-print-header { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; break-inside: avoid; }
+  .builder-print-header img { display: block; flex: none; }
+  .builder-print-header h1 { margin: 0 0 3px; color: #b73820; font-size: 21pt; }
+  .builder-print-header p { margin: 2px 0; }
+  .builder-print table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .builder-print col:nth-child(1) { width: 30%; }
+  .builder-print col:nth-child(2) { width: 40%; }
+  .builder-print col:nth-child(n + 3) { width: 15%; }
+  .builder-print tr { break-inside: avoid; }
+  .builder-print :is(th, td) { border: 1px solid #737984; padding: 4px 6px; text-align: left; }
+  .builder-print tbody th { font-weight: 400; }
+  .builder-print tr > :nth-child(n + 3), .builder-print tfoot :is(th, td) { text-align: right; }
+  .builder-print thead, .builder-print tfoot { background: #f7f3f1; print-color-adjust: exact; font-weight: 700; }
 }
