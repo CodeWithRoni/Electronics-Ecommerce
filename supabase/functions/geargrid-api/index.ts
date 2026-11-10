@@ -1,6 +1,7 @@
 import { createHandler } from './handler.js';
 import { rpc, supabaseData } from './database.js';
 import { createAdminAuth } from './auth.js';
+import { uploadMedia } from './media.js';
 
 const url = Deno.env.get('SUPABASE_URL');
 const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}');
@@ -14,4 +15,10 @@ const configNames = [
 const env = Object.fromEntries(configNames.map((name) => [name, Deno.env.get(name)]));
 
 const auth = createAdminAuth(url, publicKey, key, (params) => rpc(url, key, 'geargrid_admin_lookup', params));
-Deno.serve(createHandler(env, (action, payload) => supabaseData(url, key, action, payload), auth));
+Deno.serve(createHandler(
+  env,
+  (action, payload) => supabaseData(url, key, action, payload),
+  auth,
+  (action, payload = {}) => rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload }),
+  (file) => uploadMedia(url, key, file),
+));

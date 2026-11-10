@@ -41,9 +41,19 @@ function Shell() {
   }, [location.key, location.search]);
   useEffect(() => { if (catalog?.shop?.name) document.title = `${catalog.shop.name} — Online Shop`; }, [catalog?.shop?.name]);
 
+  const settings = catalog?.settings || {};
+  useEffect(() => {
+    const icon = document.createElement('link');
+    if (!settings.favicon) return;
+    icon.rel = 'icon';
+    icon.href = settings.favicon;
+    document.head.append(icon);
+    return () => icon.remove();
+  }, [settings.favicon]);
+
   const shop = catalog?.shop;
-  const shopName = shop?.name || 'Electronics E-commerce';
-  const departments = shopDepartments(catalog?.groups);
+  const shopName = shop?.name || 'GearGrid';
+  const departments = shopDepartments(catalog?.groups, !catalog?.settings);
   const count = cart.reduce((n, l) => n + (Number.isInteger(l.qty) ? l.qty : 1), 0);
   const search = (e) => { e.preventDefault(); navigate(`/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''}`); };
 
@@ -65,8 +75,10 @@ function Shell() {
             <RetailIcon name="menu" size={22} />
           </button>
           <Link to="/" className="brand retail-brand" aria-label={`${shopName} home`}>
-            <span className="retail-brand-mark"><RetailIcon name="bolt" size={24} /></span>
-            <span className="retail-brand-name">{shopName}</span>
+            {settings.header_logo ? <img className="retail-header-logo" src={settings.header_logo} alt="" /> : <>
+              <span className="retail-brand-mark"><RetailIcon name="bolt" size={24} /></span>
+              <span className="retail-brand-name">{shopName}</span>
+            </>}
           </Link>
           <form className="retail-search" role="search" onSubmit={search}>
             <input type="search" value={q} onChange={(event) => setQ(event.target.value)} placeholder="Search products, brands or models" aria-label="Search products" />
@@ -110,7 +122,7 @@ function Shell() {
       </main>
       <footer>
         <div className="wrap">
-          <div><h3>{shopName}</h3><p>Computers, networking and IT accessories.</p>{shop?.address && <p>{shop.address}</p>}</div>
+          <div>{settings.footer_logo ? <img className="retail-footer-logo" src={settings.footer_logo} alt={shopName} /> : <h3>{shopName}</h3>}<p>Computers, networking and IT accessories.</p>{shop?.address && <p>{shop.address}</p>}</div>
           <div><h3>Shop</h3><p><Link to="/products">All products</Link></p><p><Link to="/wishlist">Wishlist</Link></p></div>
           {(shop?.phone || shop?.tel || shop?.email) && <div><h3>Contact</h3>
             {shop.phone && <p>Mobile: <a href={`tel:${shop.phone}`}>{shop.phone}</a></p>}
@@ -119,7 +131,11 @@ function Shell() {
           </div>}
           <div><h3>Orders</h3><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
         </div>
-        <p className="powered">Electronics E-commerce · Independent Store</p>
+        <div className="retail-socials">
+          {[['facebook', 'Facebook'], ['whatsapp', 'WhatsApp'], ['instagram', 'Instagram'], ['youtube', 'YouTube']]
+            .filter(([key]) => settings[key]).map(([key, label]) => <a key={key} href={settings[key]} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}><RetailIcon name={key} size={19} /></a>)}
+        </div>
+        <p className="powered">{shopName} · Independent Store</p>
       </footer>
       <div className="toasts" aria-live="polite">{toasts.map((t) => <div key={t.id} className={`toast ${t.kind === 'err' ? 'err' : ''}`}>{t.msg}</div>)}</div>
     </div>

@@ -18,6 +18,7 @@ export async function rpc(url, key, procedure, parameters) {
   }
   const data = await response.json().catch(() => null);
   if (response.ok && data !== null) return data;
+  if (data?.code === 'P0001' && data.message?.startsWith('Console: ')) throw new Error(data.message.slice(9));
   if (data?.code === 'P0001' && (data.message === 'Order not found' || data.message?.startsWith('Product no longer sold or out of stock: '))) {
     throw new Error(data.message);
   }

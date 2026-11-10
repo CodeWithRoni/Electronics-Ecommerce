@@ -1,6 +1,8 @@
+import { cleanSettings, httpsUrl } from './settings.js';
+
 const phoneNorm = (value) => String(value || '').replace(/\D/g, '').replace(/^880/, '0');
 
-export function createHandler(env, db, auth) {
+export function createHandler(env, db, auth, consoleData, upload) {
   const allowed = env.ALLOWED_ORIGIN || 'https://codewithroni.github.io';
   const shop = {
     name: env.SHOP_NAME || 'GearGrid', open: true, currency: 'BDT',
@@ -19,22 +21,13 @@ export function createHandler(env, db, auth) {
   const fail = (error, status = 400) => reply({ ok: false, error }, status);
 
   async function catalog() {
-    const results = await db('catalog');
+    const [results, { settings, groups, brands }] = await Promise.all([db('catalog'), consoleData('snapshot')]);
+    const threshold = settings.low_stock_threshold ?? 5;
     const products = results.map((p) => ({
-      ...p, price: Number(p.price), in_stock: p.stock > 0, images: p.image ? [p.image] : [],
+      ...p, price: Number(p.price), in_stock: p.stock > 0, low_stock: p.stock <= threshold,
+      images: p.image ? [p.image] : [],
     }));
-    const groups = new Map();
-    const brands = new Set();
-    for (const product of products) {
-      if (product.brand_id) brands.add(product.brand_id);
-      if (!product.group_id) continue;
-      if (!groups.has(product.group_id)) groups.set(product.group_id, new Set());
-      if (product.category_id) groups.get(product.group_id).add(product.category_id);
-    }
-    const entry = (id) => ({ id, name: id });
-    return { shop, products, groups: [...groups].map(([id, categories]) => ({
-      ...entry(id), categories: [...categories].map(entry),
-    })), brands: [...brands].map(entry) };
+    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, settings };
   }
 
   function createOrder(payload) {
@@ -68,6 +61,26 @@ export function createHandler(env, db, auth) {
 
   function admin(action, payload) {
     switch (action) {
+      case 'admin.store': return consoleData('snapshot');
+      case 'admin.settings.save': return consoleData('settings_save', cleanSettings(payload));
+      case 'admin.taxonomy.save':
+      case 'admin.taxonomy.delete': {
+        const kind = payload.kind;
+        const name = String(payload.name || '').trim();
+        const groupId = String(payload.group_id || '');
+        const id = String(payload.id || '');
+        const saving = action.endsWith('.save');
+        if (!['group', 'category', 'brand'].includes(kind) || (kind === 'category' && !groupId)
+          || (saving ? !name || name.length > 100 : !id)) throw new Error('Enter a valid catalog name and group');
+        return consoleData(saving ? 'taxonomy_save' : 'taxonomy_delete', {
+          kind, id: id || crypto.randomUUID(), name, group_id: groupId,
+        });
+      }
+      case 'admin.product.delete': {
+        const id = String(payload.id || '');
+        if (!id) throw new Error('Product ID required');
+        return consoleData('product_delete', { id });
+      }
       case 'admin.products': return db('admin_products');
       case 'admin.orders': return db('admin_orders');
       case 'admin.product.upsert': {
@@ -76,10 +89,15 @@ export function createHandler(env, db, auth) {
         const stock = Number(p.stock);
         if (!p.id || !p.name || !Number.isFinite(price) || price < 0 || !Number.isSafeInteger(stock) || stock < 0 || stock > 2147483647)
           throw new Error('Invalid product');
-        return db('upsert_product', {
+        if (p.category_id && !p.group_id) throw new Error('Choose a product group for this category');
+        const expected = payload.expected_stock;
+        if (expected != null && (!Number.isSafeInteger(expected) || expected < 0 || expected > 2147483647))
+          throw new Error('Invalid original stock');
+        return consoleData('product_save', {
           id: p.id, name: p.name, sku: p.sku || '', description: p.description || '', price, stock,
           group_id: p.group_id || '', category_id: p.category_id || '', brand_id: p.brand_id || '',
-          unit: p.unit || 'pcs', image: p.image || '', active: p.active === false ? 0 : 1,
+          unit: p.unit || 'pcs', image: httpsUrl(p.image), active: p.active === false ? 0 : 1,
+          create_only: payload.create_only === true, expected_stock: expected,
         });
       }
       case 'admin.order.status':
@@ -96,6 +114,12 @@ export function createHandler(env, db, auth) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     if (request.method !== 'POST') return fail('POST required', 405);
     try {
+      if (request.headers.get('Content-Type')?.startsWith('multipart/form-data')) {
+        if (!await auth.canManage(request.headers.get('Authorization'))) return fail('Unauthorized', 401);
+        if (Number(request.headers.get('Content-Length')) > 3 * 1024 * 1024 + 16384)
+          return fail('Choose an image up to 3 MB', 413);
+        return ok(await upload((await request.formData()).get('file')));
+      }
       const { action, payload = {} } = await request.json();
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return fail('Invalid request');
       if (action === 'shop.catalog') return ok(await catalog());

@@ -9,12 +9,13 @@ const departments = [
   ['Printer', 'printer'],
 ];
 
-export function shopDepartments(groups = []) {
+export function shopDepartments(groups = [], useFallback = true) {
   const catalogLinks = groups.map(({ id, name }) => ({
     name,
     to: '/products?g=' + encodeURIComponent(id),
     icon: departmentIcon(name),
   }));
+  if (!useFallback) return catalogLinks;
   const browseLinks = departments
     .filter(([name]) => !groups.some((group) => group.name.toLowerCase() === name.toLowerCase()))
     .map(([name, icon]) => ({ name, icon, to: '/products?q=' + encodeURIComponent(name) }));
@@ -44,6 +45,10 @@ const icons = {
   wallet: <><rect x="2.5" y="5" width="19" height="14" rx="2" /><path d="M3 10h18M6 15h3" /></>,
   heart: <path d="M20.8 5.7a5 5 0 0 0-7.1 0L12 7.4l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21l8.8-8.2a5 5 0 0 0 0-7.1Z" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  facebook: <path d="M14 21v-8h3l.5-3H14V8c0-1 .4-2 2-2h2V3.3A17 17 0 0 0 15.5 3C12.8 3 11 4.7 11 7.7V10H8v3h3v8" />,
+  whatsapp: <><path d="M20.5 11.8a8.4 8.4 0 0 1-12.4 7.5L3 21l1.7-4.9A8.4 8.4 0 1 1 20.5 11.8Z" /><path d="M9 8c-1.4 1.4.2 4.7 2.4 6.4 2 1.6 3.7 1.8 4.6.3l-2.4-1.4-.8 1c-1.7-.8-2.8-2-3.3-3.3l.8-.8L9 8Z" /></>,
+  instagram: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><path d="M17.5 6.6h.01" /></>,
+  youtube: <><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="m10 9 5 3-5 3z" /></>,
   bolt: <path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z" />,
 };
 

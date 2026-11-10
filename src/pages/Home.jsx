@@ -5,14 +5,18 @@ import { RetailIcon, shopDepartments } from '../components/retail';
 import heroArt from '../assets/retail-hero.svg';
 
 export default function Home() {
-  const { shop, products, groups, brands } = useShop((s) => s.catalog);
+  const { shop, products, groups, brands, settings } = useShop((s) => s.catalog);
   const brandName = Object.fromEntries(brands.map((brand) => [brand.id, brand.name]));
   const featured = [...products].sort((a, b) =>
     Number(b.in_stock) - Number(a.in_stock) ||
     String(b.created_at || '').localeCompare(String(a.created_at || ''))
   ).slice(0, 10);
   const payments = [shop.cod && 'Cash on delivery', shop.bkash?.enabled && 'bKash'].filter(Boolean);
-  const departments = shopDepartments(groups);
+  const departments = shopDepartments(groups, !settings);
+  const banner = settings || {};
+  const buttonText = banner.banner_button || 'Shop all products';
+  const bannerLink = banner.banner_link || '#/products';
+  const buttonContent = <>{buttonText} <span aria-hidden="true">→</span></>;
 
   return (
     <div className="retail-home">
@@ -20,11 +24,12 @@ export default function Home() {
         <section className="retail-hero" aria-labelledby="home-title">
           <div className="retail-hero-copy">
             <span className="retail-kicker">COMPUTERS & ELECTRONICS</span>
-            <h1 id="home-title">Tech for every<br className="desktop-break" /> setup<span>.</span></h1>
-            <p>Explore computer parts, networking gear and everyday accessories in one place.</p>
-            <Link className="btn btn-primary" to="/products">Shop all products <span aria-hidden="true">→</span></Link>
+            <h1 id="home-title">{banner.banner_title || <>Tech for every<br className="desktop-break" /> setup<span>.</span></>}</h1>
+            <p>{banner.banner_text || 'Explore computer parts, networking gear and everyday accessories in one place.'}</p>
+            {bannerLink.startsWith('#/') ? <Link className="btn btn-primary" to={bannerLink.slice(1)}>{buttonContent}</Link>
+              : <a className="btn btn-primary" href={bannerLink}>{buttonContent}</a>}
           </div>
-          <img className="retail-hero-art" src={heroArt} alt="" fetchPriority="high" />
+          <img className={`retail-hero-art ${banner.banner_image ? "retail-custom-art" : ""}`} src={banner.banner_image || heroArt} alt="" fetchPriority="high" />
         </section>
 
         <aside className="retail-shortcuts" aria-label="Shopping shortcuts">
@@ -47,7 +52,7 @@ export default function Home() {
         <Link to="/wishlist"><RetailIcon name="heart" /><span><strong>Your wishlist</strong><small>Save products for later</small></span></Link>
       </section>
 
-      <section className="retail-section" aria-labelledby="department-title">
+      {departments.length > 0 && <section className="retail-section" aria-labelledby="department-title">
         <div className="retail-section-heading">
           <h2 id="department-title">Shop by category</h2>
           <p>Browse computers, components, peripherals and more.</p>
@@ -57,7 +62,7 @@ export default function Home() {
             <Link key={to} to={to}><RetailIcon name={icon} size={29} /><span>{name}</span></Link>
           ))}
         </nav>
-      </section>
+      </section>}
 
       <section className="retail-section" aria-labelledby="featured-title">
         <div className="retail-section-heading">

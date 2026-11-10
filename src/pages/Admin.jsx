@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
 import { useShop } from '../lib/store';
 import { money } from '../lib/format';
+import { ImageField, StoreSettings, Taxonomy } from './AdminStore';
 
 const emptyProduct = { id: '', name: '', sku: '', description: '', price: 0, stock: 0, group_id: '', category_id: '', brand_id: '', image: '', unit: 'pcs', active: true };
 const statuses = { new: 'New', confirmed: 'Confirmed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
@@ -9,12 +10,13 @@ const sections = [
   ['overview', 'Overview', 'dashboard'],
   ['products', 'Products & inventory', 'box'],
   ['orders', 'Customer orders', 'orders'],
+  ['taxonomy', 'Catalog structure', 'stock'],
+  ['settings', 'Storefront settings', 'settings'],
 ];
 const productFields = [
   ['id', 'Product ID', true], ['sku', 'Model / SKU'],
   ['name', 'Product name', true], ['price', 'Price (BDT)', true, 'number'],
-  ['stock', 'Stock quantity', true, 'number'], ['group_id', 'Category / group'],
-  ['category_id', 'Subcategory'], ['brand_id', 'Brand'], ['image', 'Image URL (https://...)'],
+  ['stock', 'Stock quantity', true, 'number'],
 ];
 const paths = {
   bolt: 'm13 2-9 12h7l-1 8 10-12h-7l1-8Z',
@@ -25,6 +27,7 @@ const paths = {
   clock: 'M12 8v5l3 2m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   refresh: 'M20 7v5h-5M4 17v-5h5m-4-1a7 7 0 0 1 12-5l3 4M4 14l3 4a7 7 0 0 0 12-5',
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5zM12 15v2',
+  settings: 'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6',
   external: 'M13 4h7v7m0-7-9 9m7 1v6H4V6h6',
 };
 
@@ -34,10 +37,11 @@ function Icon({ name, size = 20 }) {
 
 async function request(token, action, payload = {}) {
   if (!API_URL) throw Error('API endpoint not configured');
+  const form = payload instanceof FormData;
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token && { Authorization: 'Bearer ' + token }) },
-    body: JSON.stringify({ action, payload }),
+    headers: { ...(form ? {} : { 'Content-Type': 'application/json' }), ...(token && { Authorization: 'Bearer ' + token }) },
+    body: form ? payload : JSON.stringify({ action, payload }),
   });
   const data = await res.json();
   if (!res.ok || !data.ok) {
@@ -51,7 +55,7 @@ async function request(token, action, payload = {}) {
 function Brand() {
   return <div className="console-brand">
     <span className="console-mark"><Icon name="bolt" size={23} /></span>
-    <div><strong>Electronics E-commerce</strong><small>STORE ADMIN</small></div>
+    <div><strong>GearGrid</strong><small>STORE ADMIN</small></div>
   </div>;
 }
 
@@ -59,9 +63,10 @@ function Status({ value, label }) {
   return <span className={`console-status console-status-${value}`}>{label || statuses[value] || value}</span>;
 }
 
-function ProductEditor({ product, existing, busy, error, onChange, onClose, onSave }) {
+function ProductEditor({ product, groups, brands, upload, existing, busy, error, onChange, onClose, onSave }) {
   const dialog = useRef(null);
   const title = existing ? 'Edit product' : 'Add product';
+  const categories = groups.find(({ id }) => id === product.group_id)?.categories || [];
   useEffect(() => {
     const element = dialog.current;
     element.showModal();
@@ -78,13 +83,23 @@ function ProductEditor({ product, existing, busy, error, onChange, onClose, onSa
     </div>
     <form className="console-product-form" onSubmit={(event) => { event.preventDefault(); onSave(); }}>
       {productFields.map(([key, label, required, type = 'text']) => (
-        <label key={key} className={`field ${['name', 'image'].includes(key) ? 'console-wide' : ''}`}>
+        <label key={key} className={`field ${key === 'name' ? 'console-wide' : ''}`}>
           <span>{label}</span>
           <input type={type} min={type === 'number' ? 0 : undefined} step={key === 'price' ? '0.01' : undefined}
             required={required} readOnly={existing && key === 'id'} value={product[key] ?? ''}
             onChange={(event) => onChange(key, event.target.value)} />
         </label>
       ))}
+      <label className="field"><span>Group</span><select value={product.group_id || ''} onChange={(event) => onChange('group_id', event.target.value)}>
+        <option value="">No group</option>{groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+      </select></label>
+      <label className="field"><span>Category</span><select disabled={!product.group_id} value={product.category_id || ''} onChange={(event) => onChange('category_id', event.target.value)}>
+        <option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+      </select></label>
+      <label className="field"><span>Brand</span><select value={product.brand_id || ''} onChange={(event) => onChange('brand_id', event.target.value)}>
+        <option value="">No brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+      </select></label>
+      <div className="console-wide"><ImageField label="Product image" value={product.image} onChange={(value) => onChange('image', value)} upload={upload} busy={busy} /></div>
       <label className="field console-wide"><span>Description / specifications</span><textarea value={product.description || ''} onChange={(event) => onChange('description', event.target.value)} /></label>
       <label className="console-visibility console-wide"><input type="checkbox" checked={!!product.active} onChange={(event) => onChange('active', event.target.checked)} /> Show on storefront</label>
       {error && <p className="console-alert console-wide" role="alert">{error}</p>}
@@ -104,6 +119,8 @@ export default function Admin() {
   const [tab, setTab] = useState('overview');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [store, setStore] = useState({ groups: [], brands: [], settings: {} });
+  const [stockFilter, setStockFilter] = useState('all');
   const [editor, setEditor] = useState(null);
   const [query, setQuery] = useState('');
   const [orderFilter, setOrderFilter] = useState('all');
@@ -113,9 +130,12 @@ export default function Admin() {
   const refreshShop = useShop((state) => state.load);
 
   const refresh = async (sessionToken = token) => {
-    const [nextProducts, nextOrders] = await Promise.all([request(sessionToken, 'admin.products'), request(sessionToken, 'admin.orders')]);
+    const [nextProducts, nextOrders, nextStore] = await Promise.all([
+      request(sessionToken, 'admin.products'), request(sessionToken, 'admin.orders'), request(sessionToken, 'admin.store'),
+    ]);
     setProducts(nextProducts);
     setOrders(nextOrders);
+    setStore(nextStore);
     setReady(true);
   };
   const run = async (action) => {
@@ -145,12 +165,32 @@ export default function Admin() {
     const product = { ...edit, id: edit.id.trim(), name: edit.name.trim(), price: Number(edit.price), stock: Number(edit.stock) };
     if (!product.id || !product.name) throw Error('Product ID and name required');
     if (!editor.existing && products.some((item) => item.id === product.id)) throw Error('This product ID already exists. Open the existing product to edit it.');
-    await request(token, 'admin.product.upsert', { product });
+    await request(token, 'admin.product.upsert', { product, create_only: !editor.existing, expected_stock: editor.originalStock });
     await refresh();
     await refreshShop();
     setEditor(null);
     setNotice('Product saved');
   });
+  const changeStore = (action, payload, success, done) => run(async () => {
+    await request(token, action, payload);
+    await refresh();
+    await refreshShop();
+    done?.();
+    setNotice(success);
+  });
+  const upload = (file, complete) => run(async () => {
+    if (file.size > 3 * 1024 * 1024) throw Error('Choose an image up to 3 MB');
+    const form = new FormData();
+    form.set('file', file);
+    const result = await request(token, '', form);
+    complete(result.url);
+    setNotice('Image uploaded. Save to publish it.');
+  });
+  const deleteProduct = (product) => {
+    if (window.confirm(`Delete ${product.name} from the catalog? Past orders keep their product details.`)) {
+      changeStore('admin.product.delete', { id: product.id }, 'Product deleted');
+    }
+  };
   const updateStatus = (order, value) => {
     if (!window.confirm(`Change order ${order.order_no} to ${statuses[value]}?`)) return;
     run(async () => {
@@ -173,12 +213,14 @@ export default function Admin() {
     setOrders([]);
     setEditor(null);
     setOrderFilter('all');
+    setStockFilter('all');
+    setStore({ groups: [], brands: [], settings: {} });
     switchSection('overview');
   };
   const openEditor = (product) => {
     setError('');
     setNotice('');
-    setEditor({ existing: Boolean(product), product: product ? { ...product, active: !!product.active } : { ...emptyProduct } });
+    setEditor({ existing: Boolean(product), originalStock: product?.stock, product: product ? { ...product, active: !!product.active } : { ...emptyProduct } });
   };
 
   if (!ready) return <div className="console-gate">
@@ -205,18 +247,25 @@ export default function Admin() {
 
   const search = query.trim().toLowerCase();
   const matches = (fields) => fields.some((value) => String(value || '').toLowerCase().includes(search));
-  const filteredProducts = products.filter((product) => matches([product.name, product.id, product.sku, product.brand_id, product.group_id]));
+  const threshold = store.settings.low_stock_threshold ?? 5;
+  const groupNames = Object.fromEntries(store.groups.map((group) => [group.id, group.name]));
+  const brandNames = Object.fromEntries(store.brands.map((brand) => [brand.id, brand.name]));
+  const filteredProducts = products.filter((product) =>
+    (stockFilter === 'all' || (stockFilter === 'out' ? Number(product.stock) === 0 : Number(product.stock) <= threshold))
+    && matches([product.name, product.id, product.sku, brandNames[product.brand_id], groupNames[product.group_id]]));
   const filteredOrders = orders.filter((order) => (orderFilter === 'all' || order.status === orderFilter) && matches([order.order_no, order.name, order.phone]));
   const pending = orders.filter((order) => order.status === 'new').length;
   const shipped = orders.filter((order) => order.status === 'shipped').length;
   const revenue = orders.filter((order) => order.status === 'delivered').reduce((sum, order) => sum + Number(order.total || 0), 0);
-  const lowStock = products.filter((product) => Number(product.stock) <= 5);
+  const lowStock = products.filter((product) => Number(product.stock) <= threshold);
   const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
-  const heading = { overview: 'Dashboard overview', products: 'Products & inventory', orders: 'Customer orders' };
+  const heading = { overview: 'Dashboard overview', products: 'Products & inventory', orders: 'Customer orders', taxonomy: 'Catalog structure', settings: 'Storefront settings' };
   const description = {
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
     orders: 'Find customer orders and update their fulfillment status.',
+    taxonomy: 'Create, rename and remove groups, categories and brands.',
+    settings: 'Control store branding, homepage banner, social links and alerts.',
   };
 
   return <div className="console-shell">
@@ -253,15 +302,22 @@ export default function Admin() {
             <div className="console-row"><span>Shipped orders</span><strong>{shipped}</strong></div>
           </section>
           <section className="console-panel">
-            <div className="console-panel-heading"><div><h2>Low stock alerts</h2><p>Products with 5 units or fewer.</p></div><button className="btn" onClick={() => switchSection('products')}>Manage stock</button></div>
-            {lowStock.length ? lowStock.slice(0, 8).map((product) => <div className="console-row" key={product.id}><span>{product.name}</span><Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={`${product.stock} left`} /></div>) : <p className="console-empty">No products at or below 5 units.</p>}
+            <div className="console-panel-heading"><div><h2>Low stock alerts</h2><p>Products with {threshold} units or fewer.</p></div><button className="btn" onClick={() => { switchSection('products'); setStockFilter('low'); }}>Manage stock</button></div>
+            {lowStock.length ? lowStock.slice(0, 8).map((product) => <div className="console-row" key={product.id}><span>{product.name}</span><Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={`${product.stock} left`} /></div>) : <p className="console-empty">No products at or below {threshold} units.</p>}
           </section>
         </div>
         <section className="console-panel">
           <div className="console-panel-heading"><div><h2>Recent orders</h2><p>The latest orders received by your store.</p></div><button className="btn" onClick={() => switchSection('orders')}>View all orders</button></div>
           {orders.length ? orders.slice(0, 6).map((order) => <div className="console-row" key={order.order_no}><div><strong>{order.order_no}</strong><small>{order.name}</small></div><Status value={order.status} /></div>) : <p className="console-empty">No orders yet.</p>}
         </section>
-      </> : (
+      </> : tab === 'taxonomy' ? (
+        <Taxonomy groups={store.groups} brands={store.brands} busy={busy}
+          save={(entry, done) => changeStore('admin.taxonomy.save', entry, 'Catalog entry saved', done)}
+          remove={(entry, done) => changeStore('admin.taxonomy.delete', entry, 'Catalog entry deleted', done)} />
+      ) : tab === 'settings' ? (
+        <StoreSettings initial={store.settings} busy={busy} upload={upload}
+          save={(draft) => changeStore('admin.settings.save', draft, 'Storefront settings saved')} />
+      ) : (
         <section className="console-panel">
           <div className="console-panel-heading">
             <div><h2>{tab === 'products' ? 'Product catalog' : 'Order list'}</h2><p>{tab === 'products' ? `${filteredProducts.length} of ${products.length} products` : `${filteredOrders.length} of ${orders.length} recent orders`}</p></div>
@@ -269,12 +325,15 @@ export default function Admin() {
           </div>
           <div className="console-toolbar">
             <input type="search" aria-label="Search admin records" placeholder={tab === 'products' ? 'Search product, model or brand' : 'Search order, name or phone'} value={query} onChange={(event) => setQuery(event.target.value)} />
+            {tab === 'products' && <select aria-label="Filter stock" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
+              <option value="all">All stock levels</option><option value="low">Low stock</option><option value="out">Out of stock</option>
+            </select>}
             {tab === 'orders' && <select aria-label="Filter order status" value={orderFilter} onChange={(event) => setOrderFilter(event.target.value)}><option value="all">All statuses</option>{Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>}
           </div>
           {tab === 'products' ? (
             filteredProducts.length ? <div className="console-table-scroll" tabIndex={0} role="region" aria-label="Product inventory table">
               <table className="console-table"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Actions</th></tr></thead>
-                <tbody>{filteredProducts.map((product) => <tr key={product.id}><td><strong>{product.name}</strong><small>{product.id}</small></td><td>{product.sku || '—'}</td><td>{money(product.price, 'BDT')}</td><td>{product.stock}</td><td><Status value={product.active ? 'delivered' : 'hidden'} label={product.active ? 'Visible' : 'Hidden'} /></td><td><button className="btn" disabled={busy} onClick={() => openEditor(product)}>Edit</button></td></tr>)}</tbody>
+                <tbody>{filteredProducts.map((product) => <tr key={product.id}><td><strong>{product.name}</strong><small>{[product.id, groupNames[product.group_id], brandNames[product.brand_id]].filter(Boolean).join(' · ')}</small></td><td>{product.sku || '—'}</td><td>{money(product.price, 'BDT')}</td><td>{Number(product.stock) <= threshold ? <Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={`${product.stock} left`} /> : product.stock}</td><td><Status value={product.active ? 'delivered' : 'hidden'} label={product.active ? 'Visible' : 'Hidden'} /></td><td><div className="console-row-actions"><button className="btn" disabled={busy} onClick={() => openEditor(product)}>Edit</button><button className="btn console-danger" disabled={busy} onClick={() => deleteProduct(product)}>Delete</button></div></td></tr>)}</tbody>
               </table>
             </div> : <p className="console-empty">{products.length ? 'No products match your search.' : 'No products yet. Add your first product to the catalog.'}</p>
           ) : (
@@ -288,8 +347,8 @@ export default function Admin() {
       )}
     </main>
 
-    {editor && <ProductEditor product={editor.product} existing={editor.existing} busy={busy} error={error}
-      onChange={(key, value) => setEditor((current) => ({ ...current, product: { ...current.product, [key]: value } }))}
+    {editor && <ProductEditor product={editor.product} groups={store.groups} brands={store.brands} upload={upload} existing={editor.existing} busy={busy} error={error}
+      onChange={(key, value) => setEditor((current) => ({ ...current, product: { ...current.product, ...(key === 'group_id' ? { category_id: '' } : {}), [key]: value } }))}
       onClose={() => { setEditor(null); setError(''); }} onSave={save} />}
   </div>;
 }
