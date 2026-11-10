@@ -1,7 +1,8 @@
 import { RetailIcon } from '../components/retail';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { customerAuth, accountRedirect } from '../lib/customerAuth';
+import { brandIcon } from '../lib/brand';
 import { footerSettings } from '../lib/footer';
 
 function Field({ label, name, type = 'text', showRequired = false, ...props }) {
@@ -30,6 +31,20 @@ export function AccountCallback() {
   return null;
 }
 
+function RegistrationConfirmation({ confirmed, email, shopName }) {
+  return <div className="account-page">
+    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home"><RetailIcon name="home" size={15} /></Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>Registration</span></nav>
+    <section className="account-confirmation" aria-labelledby="confirm-account-heading">
+      <img src={brandIcon} width="56" height="56" alt="" />
+      <p className="account-confirmation-brand">{shopName} · Registration</p>
+      <h1 id="confirm-account-heading" tabIndex={-1} ref={(heading) => heading?.focus()}>{confirmed ? 'Your account is ready' : 'Please confirm your email'}</h1>
+      <p>{confirmed ? 'Your account was created successfully.' : <>Look for the confirmation link {email ? <>at <strong>{email}</strong></> : 'in your inbox'}. Open it to activate your account.</>}</p>
+      {!confirmed && <p className="account-confirmation-tip">If you don’t see it, check your spam or junk folder.</p>}
+      <Link to="/account/login" state={email ? { email } : undefined} className="account-primary">Login with your credentials</Link>
+    </section>
+  </div>;
+}
+
 export default function Account({ page, shop, settings, theme, toggleTheme }) {
   const [details, setDetails] = useState(null);
   const [session, setSession] = useState(undefined);
@@ -37,6 +52,7 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { state } = useLocation();
   useEffect(() => {
     const { data: { subscription } } = customerAuth.onAuthStateChange((_event, session) => setSession(session));
     return () => subscription.unsubscribe();
@@ -73,10 +89,9 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
       if (register) {
         const { email, ...profile } = details;
         result = await customerAuth.signUp({ email, password, options: { data: profile, emailRedirectTo: accountRedirect('confirmed') } });
-        if (!result.error && !result.data.session) {
-          setDetails(null);
-          setMessage('Check your email to confirm your account before signing in.');
-        }
+        if (!result.error) navigate('/account/check-email', {
+          replace: true, state: { email, confirmed: Boolean(result.data.session) },
+        });
       } else if (forgot) {
         result = await customerAuth.resetPasswordForEmail(get('email').trim(), { redirectTo: accountRedirect('recovery') });
         if (!result.error) setMessage('If that address has an account, check your inbox for a reset link.');
@@ -92,6 +107,8 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
       setError(issue.message || 'The account service could not be reached. Try again.');
     } finally { setBusy(false); }
   }
+
+  if (page === 'check-email') return <RegistrationConfirmation confirmed={state?.confirmed} email={state?.email} shopName={shop.name} />;
 
   return <div className="account-page">
     <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home">{register ? <RetailIcon name="home" size={15} /> : 'Home'}</Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>{signedIn ? 'Profile' : title}</span></nav>
@@ -132,7 +149,7 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
             <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} maxLength={72} />
             <Field label="Confirm Password" name="confirm" type="password" autoComplete="new-password" minLength={8} maxLength={72} />
           </> : <>
-            <Field label="E-Mail" name="email" type="email" autoComplete={forgot ? 'email' : 'username'} maxLength={254} />
+            <Field label="E-Mail" name="email" type="email" autoComplete={forgot ? 'email' : 'username'} defaultValue={page === 'login' ? state?.email : undefined} maxLength={254} />
             {!forgot && <div className="account-password"><Field label="Password" name="password" type="password" autoComplete="current-password" maxLength={72} /><Link to="/account/forgot">Forgotten Password?</Link></div>}
           </>}
           <button type="submit" className="account-primary" disabled={busy}>{busy ? 'Please wait…' : register ? (details ? 'Create Account' : 'Continue') : forgot ? 'Send Reset Link' : reset ? 'Save Password' : 'Login'}</button>

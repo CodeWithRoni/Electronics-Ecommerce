@@ -73,7 +73,7 @@ function Shell() {
             : (
               <Routes>
                 <Route path="/" element={<Home />} />
-                {['login', 'register', 'forgot', 'reset', 'privacy'].map((page) => <Route key={page} path={`/account/${page}`} element={<Account key={page} page={page} shop={shop} settings={settings} theme={theme} toggleTheme={toggleTheme} />} />)}
+                {['login', 'register', 'check-email', 'forgot', 'reset', 'privacy'].map((page) => <Route key={page} path={`/account/${page}`} element={<Account key={page} page={page} shop={shop} settings={settings} theme={theme} toggleTheme={toggleTheme} />} />)}
                 <Route path="/pc-builder" element={<PcBuilder />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/p/:id" element={<Product />} />

@@ -259,3 +259,12 @@
 .product-attribute-options { display: flex; flex-wrap: wrap; gap: 6px; }
 .product-attribute-options label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; cursor: pointer; }
 .product-attribute-options input { width: 15px; height: 15px; min-height: 0; margin: 0; }
+
+.console-registration-email { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.console-registration-email > * { min-width: 0; }
+.console-email-preview h2 { margin-top: 0; }
+.console-email-preview iframe { display: block; width: 100%; min-height: 540px; border: 1px solid var(--line); border-radius: 8px; background: #edf1f6; }
+.console-email-preview details { margin-top: 14px; }
+.console-email-preview summary { cursor: pointer; }
+.console-email-preview details .field { margin-top: 8px; }
+@media (max-width: 1120px) { .console-registration-email { grid-template-columns: minmax(0, 1fr); } }

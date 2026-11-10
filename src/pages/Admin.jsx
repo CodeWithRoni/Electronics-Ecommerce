@@ -1,4 +1,5 @@
 import AdminTaxonomy from './AdminTaxonomy';
+import AdminRegistrationEmail from './AdminRegistrationEmail';
 import { ProductAttributes } from './AdminAttributes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
@@ -353,6 +354,7 @@ export default function Admin() {
   const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
   const heading = {
     overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
+    registrationEmail: 'Registration Email',
     taxonomy: 'Categories & Subcategories', settings: 'General Settings',
     footer: 'Footer Settings', banners: 'Flash Sales & Banners', customers: 'Customer Directory',
     reports: 'Sales Reports', health: 'System Health', monitoring: 'Live Monitoring',
@@ -362,6 +364,7 @@ export default function Admin() {
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
     orders: 'Find customer orders and update their fulfillment status.',
+    registrationEmail: 'Design the signup confirmation email and preview the finished template.',
     taxonomy: 'Manage categories, subcategories and brands or move them in bulk with Excel.',
     settings: 'Control header branding, homepage banner and inventory alerts.',
     footer: 'Manage support, navigation, contact details, app buttons and social links.',
@@ -435,6 +438,14 @@ export default function Admin() {
       ) : tab === 'footer' ? (
         <AdminFooter settings={store.settings} shop={shop} busy={busy} upload={upload}
           save={(draft) => changeStore('admin.footer.save', draft, 'Footer settings saved')} />
+      ) : tab === 'registrationEmail' ? (
+        <AdminRegistrationEmail settings={store.settings} shop={shop} upload={upload} busy={busy}
+          canPublish={store.registration_email_publish_available}
+          save={(draft) => changeStore('admin.registration_email.save', draft, 'Registration email settings saved')}
+          publish={() => run(async () => {
+            await request(token, 'admin.registration_email.publish');
+            setNotice('Registration email published to Supabase');
+          })} />
       ) : tab === 'settings' || tab === 'banners' ? (
         <StoreSettings key={tab} section={tab} initial={store.settings} busy={busy} upload={upload}
           save={(draft) => changeStore('admin.settings.save', draft, 'Storefront settings saved')} />

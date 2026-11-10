@@ -8,7 +8,7 @@ const sections = [
   ['marketing', 'Marketing & Promotions', 'gift', [[null, 'Discounts & Coupons'], ['banners', 'Flash Sales & Banners'], [null, 'Email & SMS Campaigns']]],
   ['content', 'Content Management', 'footer', [[null, 'Pages'], [null, 'Blog / Articles'], ['media', 'Media Library'], ['footer', 'Footer Settings']]],
   ['financials', 'Financials & Reports', 'reports', [['reports', 'Sales Reports'], [null, 'Tax & Shipping Reports'], [null, 'Payouts & Ledger']]],
-  ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], [null, 'Payment Gateways'], [null, 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
+  ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], ['registrationEmail', 'Registration Email'], [null, 'Payment Gateways'], [null, 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
   ['access', 'Access Control & Security', 'lock', [[null, 'Admin Users'], [null, 'Roles & Permissions'], [null, 'Activity Logs']]],
   ['maintenance', 'System Maintenance', 'stock', [[null, 'Cache & Optimization'], [null, 'Backup & Restore'], ['health', 'System Health']]],
 ];

@@ -480,3 +480,15 @@
   .builder-print tr > :nth-child(n + 3), .builder-print tfoot :is(th, td) { text-align: right; }
   .builder-print thead, .builder-print tfoot { background: #f7f3f1; print-color-adjust: exact; font-weight: 700; }
 }
+
+.account-confirmation {
+  width: min(100%, 480px); margin: clamp(24px, 7vh, 70px) auto 36px; padding: clamp(21px, 5vw, 36px);
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel-2); text-align: center;
+}
+.account-confirmation img { display: block; margin: 0 auto 14px; }
+.account-confirmation-brand { margin: 0 0 8px; color: var(--aqua); font-size: 12px; font-weight: 800; }
+.account-confirmation h1 { margin: 0; font-size: clamp(23px, 5vw, 30px); }
+.account-confirmation h1:focus { outline: none; }
+.account-confirmation p { overflow-wrap: anywhere; }
+.account-confirmation-tip { color: var(--muted); font-size: 13px; }
+.account-confirmation .account-primary { margin-top: 20px; }

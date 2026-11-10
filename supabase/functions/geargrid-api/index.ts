@@ -10,9 +10,10 @@ const publicKeys = JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || '{}')
 const publicKey = publicKeys.default || Deno.env.get('SUPABASE_ANON_KEY');
 const configNames = [
   'ALLOWED_ORIGIN', 'SHOP_NAME', 'SHOP_ADDRESS', 'SHOP_PHONE', 'SHOP_EMAIL',
-  'BKASH_NUMBER', 'DELIVERY_INSIDE', 'DELIVERY_OUTSIDE', 'DELIVERY_INSIDE_LABEL', 'DATABASE_READ_ONLY',
+  'BKASH_NUMBER', 'DELIVERY_INSIDE', 'DELIVERY_OUTSIDE', 'DELIVERY_INSIDE_LABEL', 'DATABASE_READ_ONLY', 'GEARGRID_AUTH_CONFIG_TOKEN',
 ];
 const env = Object.fromEntries(configNames.map((name) => [name, Deno.env.get(name)]));
+env.SUPABASE_PROJECT_REF = url ? new URL(url).hostname.split('.')[0] : '';
 
 const auth = createAdminAuth(url, publicKey, key, (params) => rpc(url, key, 'geargrid_admin_lookup', params));
 Deno.serve(createHandler(

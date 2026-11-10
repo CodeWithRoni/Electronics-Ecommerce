@@ -1,3 +1,4 @@
+import { cleanRegistrationEmail, publishRegistrationEmail } from './registration-email.js';
 import { pcSlots } from './pc-slots.js';
 import { cleanFooter, cleanSettings, httpsUrl } from './settings.js';
 
@@ -30,7 +31,9 @@ export function createHandler(env, db, auth, consoleData, upload) {
       ...p, price: Number(p.price), in_stock: p.stock > 0, low_stock: p.stock <= threshold,
       images: p.image ? [p.image] : [],
     }));
-    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, attributes, settings };
+    const storefrontSettings = { ...settings };
+    delete storefrontSettings.registration_email;
+    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, attributes, settings: storefrontSettings };
   }
 
   function createOrder(payload) {
@@ -68,7 +71,14 @@ export function createHandler(env, db, auth, consoleData, upload) {
       case 'admin.attribute.delete': return consoleData('attribute_delete', payload);
       case 'admin.attribute.value.save': return consoleData('attribute_value_save', payload);
       case 'admin.attribute.value.delete': return consoleData('attribute_value_delete', payload);
-      case 'admin.store': return consoleData('snapshot');
+      case 'admin.store': return Promise.resolve(consoleData('snapshot')).then((snapshot) => ({
+        ...snapshot, registration_email_publish_available: Boolean(env.GEARGRID_AUTH_CONFIG_TOKEN),
+      }));
+      case 'admin.registration_email.save': return consoleData('settings_patch', { registration_email: cleanRegistrationEmail(payload) });
+      case 'admin.registration_email.publish': return Promise.resolve(consoleData('snapshot')).then(({ settings }) => {
+        if (!settings.registration_email) throw new Error('Save the registration email settings before publishing');
+        return publishRegistrationEmail(env, settings.registration_email);
+      });
       case 'admin.settings.save': return consoleData('settings_patch', cleanSettings(payload));
       case 'admin.footer.save': return consoleData('settings_patch', { footer: cleanFooter(payload) });
       case 'admin.taxonomy.import': {
