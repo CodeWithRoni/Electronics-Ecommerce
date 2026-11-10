@@ -55,7 +55,3 @@ body{background:var(--rack)}.wrap{max-width:1320px}.top{background:#101827;color
  .top .brand b{font-size:17px}
  .top .wrap{gap:9px}
 }
-
-/* Sample catalog labels */
-.demo-tag{display:inline-block;margin:5px 0 7px;padding:3px 7px;border-radius:4px;background:#fff2d6;color:#925b00;font-size:10px;font-weight:900;letter-spacing:.05em}
-.demo-product-notice{border:1px solid #f0d5a4;background:#fff7e7;color:#765018;padding:14px;border-radius:8px;font-size:13px;line-height:1.6}
