@@ -22,8 +22,6 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Build independent storefront
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://electronics-ecommerce-api.ahroni-usa.workers.dev' }}
         run: |
           npm ci
           npm run build

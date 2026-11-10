@@ -12,7 +12,7 @@ import android.widget.ProgressBar;
 
 public class MainActivity extends Activity {
     private WebView web;
-    private static final String SHOP = "https://codewithroni.github.io/Electronics-Ecommerce/";
+    private static final String SHOP = "https://codewithroni.github.io/GearGrid/";
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         LinearLayout layout = new LinearLayout(this);
@@ -32,7 +32,7 @@ public class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
                 android.net.Uri uri = request.getUrl();
                 String host = uri.getHost();
-                if ("https".equals(uri.getScheme()) && ("codewithroni.github.io".equals(host) || "electronics-ecommerce-api.ahroni-usa.workers.dev".equals(host))) return false;
+                if ("https".equals(uri.getScheme()) && "codewithroni.github.io".equals(host)) return false;
                 try { startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
                 return true;
             }

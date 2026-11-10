@@ -171,7 +171,7 @@ export default function Admin() {
       <section className="console-login" aria-labelledby="login-heading">
         <div className="console-icon"><Icon name="lock" size={23} /></div>
         <h1 id="login-heading">Store administration</h1>
-        <p>Enter your Cloudflare admin access token to unlock the dashboard.</p>
+        <p>Enter your GearGrid admin access token to unlock the dashboard.</p>
         <form onSubmit={(event) => { event.preventDefault(); run(refresh); }}>
           <label className="field"><span>Admin access token</span><input type="password" value={token} onChange={(event) => setToken(event.target.value)} required autoComplete="off" /></label>
           <button className="btn btn-primary" disabled={busy}>{busy ? 'Unlocking…' : 'Unlock dashboard'}</button>

@@ -1,0 +1,4 @@
+project_id = "geargrid"
+
+[functions.geargrid-api]
+verify_jwt = false
