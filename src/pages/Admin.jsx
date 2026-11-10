@@ -8,6 +8,7 @@ import { money } from '../lib/format';
 import { ImageField, StoreSettings } from './AdminStore';
 import AdminFooter from './AdminFooter';
 import AdminNavigation from './AdminNavigation';
+import AdminOverview from './AdminOverview';
 import { Customers, SalesReport } from './AdminInsights';
 import { LiveMonitoring, MediaLibrary, OrderDocuments } from './AdminOperations';
 import { pcSlots } from '../lib/pcBuilder';
@@ -284,6 +285,7 @@ export default function Admin() {
     });
   };
   const switchSection = (section) => {
+    if (section !== tab) window.scrollTo(0, 0);
     setTab(section);
     setQuery('');
     setError('');
@@ -347,11 +349,7 @@ export default function Admin() {
     (stockFilter === 'all' || (stockFilter === 'out' ? Number(product.stock) === 0 : Number(product.stock) <= threshold))
     && matches([product.name, product.id, product.sku, brandNames[product.brand_id], groupNames[product.group_id]]));
   const filteredOrders = orders.filter((order) => (orderFilter === 'all' || order.status === orderFilter) && matches([order.order_no, order.name, order.phone]));
-  const pending = orders.filter((order) => order.status === 'new').length;
-  const shipped = orders.filter((order) => order.status === 'shipped').length;
-  const revenue = orders.filter((order) => order.status === 'delivered').reduce((sum, order) => sum + Number(order.total || 0), 0);
   const lowStock = products.filter((product) => Number(product.stock) <= threshold);
-  const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
   const heading = {
     overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
     registrationEmail: 'Registration Email',
@@ -389,36 +387,20 @@ export default function Admin() {
     </aside>
 
     <main className="console-main">
-      <header className="console-page-heading">
+      <header className="console-page-heading" data-overview={tab === 'overview'}>
         <div><span className="console-kicker">STORE MANAGEMENT</span><h1>{heading[tab]}</h1><p>{description[tab]}</p></div>
-        <button type="button" className="btn" disabled={busy} onClick={() => run(() => refresh())}><Icon name="refresh" size={17} /> Refresh</button>
+        <button type="button" className="btn" disabled={busy} onClick={() => run(() => refresh())}><Icon name="refresh" size={17} /> {busy ? 'Working…' : 'Refresh'}</button>
       </header>
       {error && !editor && <p className="console-alert" role="alert">{error}</p>}
       {notice && <p className="console-notice" role="status">{notice}</p>}
 
-      {tab === 'overview' ? <>
-        <section className="console-stats" aria-label="Store totals">
-          {[['Products', products.length, 'box'], ['Available units', totalUnits, 'stock'], ['Recent orders', orders.length, 'orders'], ['Pending orders', pending, 'clock']].map(([label, value, icon]) => (
-            <div key={label} className="console-stat"><div className="console-icon"><Icon name={icon} /></div><div><span>{label}</span><strong>{value}</strong></div></div>
-          ))}
-        </section>
-        <div className="console-insights">
-          <section className="console-panel">
-            <div className="console-panel-heading"><div><h2>Sales summary</h2><p>Based on the latest {orders.length} orders.</p></div></div>
-            <div className="console-sales"><span>Delivered order value</span><strong>{money(revenue, 'BDT')}</strong></div>
-            <div className="console-row"><span>Awaiting confirmation</span><strong>{pending}</strong></div>
-            <div className="console-row"><span>Shipped orders</span><strong>{shipped}</strong></div>
-          </section>
-          <section className="console-panel">
-            <div className="console-panel-heading"><div><h2>Low stock alerts</h2><p>Products with {threshold} units or fewer.</p></div><button className="btn" onClick={() => { switchSection('products'); setStockFilter('low'); }}>Manage stock</button></div>
-            {lowStock.length ? lowStock.slice(0, 8).map((product) => <div className="console-row" key={product.id}><span>{product.name}</span><Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={`${product.stock} left`} /></div>) : <p className="console-empty">No products at or below {threshold} units.</p>}
-          </section>
-        </div>
-        <section className="console-panel">
-          <div className="console-panel-heading"><div><h2>Recent orders</h2><p>The latest orders received by your store.</p></div><button className="btn" onClick={() => switchSection('orders')}>View all orders</button></div>
-          {orders.length ? orders.slice(0, 6).map((order) => <div className="console-row" key={order.order_no}><div><strong>{order.order_no}</strong><small>{order.name}</small></div><Status value={order.status} /></div>) : <p className="console-empty">No orders yet.</p>}
-        </section>
-      </> : tab === 'monitoring' ? <LiveMonitoring orders={orders} lowStock={lowStock} lastSync={lastSync} busy={busy} refresh={() => run(() => refresh())} />
+      {tab === 'overview' ? <AdminOverview Icon={Icon} Status={Status} statuses={statuses} shopName={store.settings.shop_name || brandName}
+        products={products} orders={orders} lowStock={lowStock} threshold={threshold} lastSync={lastSync} busy={busy}
+        addProduct={() => openEditor()} openProduct={openEditor}
+        openOrders={(filter = 'all', search = '') => { switchSection('orders'); setOrderFilter(filter); setQuery(search); }}
+        openInventory={(filter = 'all') => { switchSection('products'); setStockFilter(filter); }}
+        openReports={() => switchSection('reports')} />
+        : tab === 'monitoring' ? <LiveMonitoring orders={orders} lowStock={lowStock} lastSync={lastSync} busy={busy} refresh={() => run(() => refresh())} />
         : tab === 'documents' ? <OrderDocuments orders={orders} settings={store.settings} />
         : tab === 'media' ? <MediaLibrary products={products} settings={store.settings} upload={upload} busy={busy} />
         : tab === 'customers' || tab === 'segments' ? <Customers key={tab} orders={orders} segmented={tab === 'segments'} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (

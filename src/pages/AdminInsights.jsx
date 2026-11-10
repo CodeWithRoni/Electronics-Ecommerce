@@ -4,7 +4,7 @@ import { money } from '../lib/format';
 const dateFormatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit',
 });
-function orderDate(value) {
+export function orderDate(value) {
   const date = new Date(value);
   if (!Number.isFinite(date.valueOf())) return '';
   const parts = Object.fromEntries(dateFormatter.formatToParts(date).map(({ type, value }) => [type, value]));
