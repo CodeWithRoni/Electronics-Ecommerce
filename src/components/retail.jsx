@@ -11,7 +11,7 @@ const departments = [
 
 export function shopDepartments(groups = [], useFallback = true) {
   const catalogLinks = groups.map(({ id, name }) => ({
-    name,
+    id, name,
     to: '/products?g=' + encodeURIComponent(id),
     icon: departmentIcon(name),
   }));
@@ -39,6 +39,7 @@ const icons = {
   network: <><rect x="2.5" y="12" width="19" height="8" rx="2" /><path d="M6 12V5m12 7V5M7 16h.01m4 0h.01m4 0h2" /></>,
   storage: <><rect x="5" y="3" width="14" height="18" rx="2" /><circle cx="12" cy="10" r="3" /><path d="M10 17h4m-2-7 3 4" /></>,
   keyboard: <><rect x="2.5" y="6" width="19" height="12" rx="2" /><path d="M6 10h.01m4 0h.01m4 0h.01m4 0h.01M6 14h.01m4 0h4m4 0h.01" /></>,
+  camera: <><path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="3" /></>,
   printer: <><path d="M6 8V3h12v5M6 17H3V9h18v8h-3m-1-5h1" /><path d="M6 14h12v7H6z" /></>,
   box: <><path d="m12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Zm0 18v-9m-9-4.5 9 4.5 9-4.5M7.5 5.3l9 4.5" /></>,
   truck: <><path d="M2 5h13v12H2zM15 9h4l3 4v4h-7" /><circle cx="6" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></>,

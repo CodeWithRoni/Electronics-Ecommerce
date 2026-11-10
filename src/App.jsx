@@ -7,6 +7,7 @@ import { shopDepartments } from './components/retail';
 import StoreHeader from './components/StoreHeader';
 import Home from './pages/Home';
 import PcBuilder from './pages/PcBuilder';
+import Account, { AccountCallback } from './pages/Account';
 import StoreFooter from './components/StoreFooter';
 import Products from './pages/Products';
 import Product from './pages/Product';
@@ -15,7 +16,6 @@ import Checkout from './pages/Checkout';
 import OrderDone from './pages/OrderDone';
 import Track from './pages/Track';
 import Wishlist from './pages/Wishlist';
-import {useFavorites} from './lib/favorites';
 import './styles-startech.css';
 import './styles-retail.css';
 
@@ -25,7 +25,6 @@ export default function App() {
 
 function Shell() {
   const { catalog, error, load, theme, toggleTheme, cart, toasts } = useShop();
-  const favoriteCount=useFavorites(s=>s.ids.length);
   const navigate = useNavigate();
   const location = useLocation();
   const [q, setQ] = useState('');
@@ -64,8 +63,9 @@ function Shell() {
   return (
     <div className="retail-shell">
       {shop?.notice && shop.open && <div className="notice" role="note">{shop.notice}</div>}
-      <StoreHeader settings={settings} name={shopName} departments={departments} q={q} setQ={setQ} search={search}
-        menuOpen={menuOpen} setMenuOpen={setMenuOpen} count={count} favoriteCount={favoriteCount} theme={theme} toggleTheme={toggleTheme} />
+      <AccountCallback />
+      <StoreHeader key={location.key} settings={settings} name={shopName} departments={departments} q={q} setQ={setQ} search={search}
+        menuOpen={menuOpen} setMenuOpen={setMenuOpen} count={count} groups={catalog?.groups} brands={catalog?.brands} products={catalog?.products} />
       <main>
         <div className="wrap">
           {!catalog ? (error ? <div className="closed"><b>The shop could not be loaded</b><p className="muted">{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div> : <Spinner label="Loading the shop" />)
@@ -73,6 +73,7 @@ function Shell() {
             : (
               <Routes>
                 <Route path="/" element={<Home />} />
+                {['login', 'register', 'forgot', 'reset', 'privacy'].map((page) => <Route key={page} path={`/account/${page}`} element={<Account key={page} page={page} shop={shop} settings={settings} theme={theme} toggleTheme={toggleTheme} />} />)}
                 <Route path="/pc-builder" element={<PcBuilder />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/p/:id" element={<Product />} />

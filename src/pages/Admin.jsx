@@ -6,6 +6,7 @@ import { ImageField, StoreSettings, Taxonomy } from './AdminStore';
 import AdminFooter from './AdminFooter';
 import AdminNavigation from './AdminNavigation';
 import { Customers, SalesReport } from './AdminInsights';
+import { LiveMonitoring, MediaLibrary, OrderDocuments } from './AdminOperations';
 import { pcSlots } from '../lib/pcBuilder';
 import { brandIcon, brandLogo, brandName } from '../lib/brand';
 
@@ -137,6 +138,9 @@ function ProductEditor({ product, groups, brands, upload, existing, busy, error,
           <select value={product.pc_specs?.memory || ''} onChange={(event) => onChange('pc_specs', { ...product.pc_specs, memory: event.target.value })}>
             <option value="">Unspecified</option>{['DDR3', 'DDR4', 'DDR5'].map((type) => <option key={type}>{type}</option>)}
           </select>
+        </label>
+        <label className="field"><span>Estimated power draw (W)</span>
+          <input type="number" min="0" max="3000" step="1" placeholder="Unspecified" value={product.pc_specs?.watts ?? ''} onChange={(event) => onChange('pc_specs', { ...product.pc_specs, watts: event.target.value === '' ? null : Number(event.target.value) })} />
         </label>
       </fieldset>
       <div className="console-wide"><ImageField label="Product image" value={product.image} onChange={(value) => onChange('image', value)} upload={upload} busy={busy} /></div>
@@ -341,7 +345,8 @@ export default function Admin() {
     overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
     taxonomy: 'Categories & Subcategories', brands: 'Brands / Manufacturers', settings: 'General Settings',
     footer: 'Footer Settings', banners: 'Flash Sales & Banners', customers: 'Customer Directory',
-    reports: 'Sales Reports', health: 'System Health',
+    reports: 'Sales Reports', health: 'System Health', monitoring: 'Live Monitoring',
+    documents: 'Invoices & Slips', segments: 'Customer Segments', media: 'Media Library',
   };
   const description = {
     overview: 'Review your latest orders, sales and stock levels.',
@@ -354,6 +359,10 @@ export default function Admin() {
     banners: 'Edit your homepage banner and manage product offers.',
     customers: 'Review customer activity from recent orders.',
     reports: 'Review delivered sales and order counts.',
+    monitoring: 'Follow recent orders and low-stock alerts.',
+    documents: 'Preview and print order invoices or packing slips.',
+    segments: 'Find single-order and repeat customers from recent orders.',
+    media: 'Find, upload and reuse storefront images.',
     health: 'Check when this session last synchronized with the store API.',
   };
 
@@ -397,7 +406,10 @@ export default function Admin() {
           <div className="console-panel-heading"><div><h2>Recent orders</h2><p>The latest orders received by your store.</p></div><button className="btn" onClick={() => switchSection('orders')}>View all orders</button></div>
           {orders.length ? orders.slice(0, 6).map((order) => <div className="console-row" key={order.order_no}><div><strong>{order.order_no}</strong><small>{order.name}</small></div><Status value={order.status} /></div>) : <p className="console-empty">No orders yet.</p>}
         </section>
-      </> : tab === 'customers' ? <Customers orders={orders} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
+      </> : tab === 'monitoring' ? <LiveMonitoring orders={orders} lowStock={lowStock} lastSync={lastSync} busy={busy} refresh={() => run(() => refresh())} />
+        : tab === 'documents' ? <OrderDocuments orders={orders} settings={store.settings} />
+        : tab === 'media' ? <MediaLibrary products={products} settings={store.settings} upload={upload} busy={busy} />
+        : tab === 'customers' || tab === 'segments' ? <Customers key={tab} orders={orders} segmented={tab === 'segments'} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
         <section className="console-panel"><h2>Store API</h2><p>Last successful data sync: {lastSync?.toLocaleString()}.</p></section>
       ) : tab === 'taxonomy' || tab === 'brands' ? (
         <Taxonomy key={tab} initialKind={tab === 'brands' ? 'brand' : 'group'} groups={store.groups} brands={store.brands} busy={busy}

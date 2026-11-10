@@ -106,10 +106,12 @@ export function createHandler(env, db, auth, consoleData, upload) {
           const slot = String(spec.slot || '');
           const socket = String(spec.socket || '').trim().toUpperCase();
           const memory = String(spec.memory || '');
+          const watts = spec.watts ?? null;
           if (!['', 'none', 'cpu', 'motherboard', 'memory', 'storage', 'graphics', 'power', 'case', 'cooler'].includes(slot)
+            || (watts !== null && (!Number.isSafeInteger(watts) || watts < 0 || watts > 3000))
             || (socket && !/^[A-Z0-9 -]{2,20}$/.test(socket)) || !['', 'DDR3', 'DDR4', 'DDR5'].includes(memory))
             throw new Error('Choose valid PC Builder specifications');
-          details.pc_specs = { slot, socket, memory };
+          details.pc_specs = { slot, socket, memory, ...(watts !== null ? { watts } : {}) };
         }
         return consoleData('product_save', {
           id: p.id, name: p.name, sku: p.sku || '', description: p.description || '', price, stock,

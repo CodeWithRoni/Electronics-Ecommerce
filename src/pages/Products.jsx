@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useShop } from '../lib/store';
+import { money } from '../lib/format';
 import { isOffer } from '../lib/pcBuilder';
 import { ProductCard, Empty } from '../components/ui';
 
@@ -34,47 +35,57 @@ export default function Products() {
   [products, g, c, b, inStock, offers, sort, q, minPrice, maxPrice, brandName, catName]);
   const count = (pred) => products.filter(pred).length;
   const group = groups.find((x) => x.id === g);
+  const groupProducts = products.filter((p) => p.group_id === g);
+  const prices = groupProducts.map((p) => Number(p.price));
+  const groupBrands = new Set(products.filter((p) => (!g || p.group_id === g) && (!c || p.category_id === c)).map((p) => p.brand_id));
+  const visibleBrands = brands.filter((brand) => groupBrands.has(brand.id));
   const title = q ? `Results for “${q}”` : catName[c] || catName[g] || brandName[b] || c || g || b || (offers ? 'Offers' : inStock ? 'In-stock products' : 'All products');
 
   return (
     <>
       <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link> <span aria-hidden="true">/</span> <Link to="/products">Catalog</Link></nav>
-      <div className="page-title"><h1>{title}</h1><span className="muted">{list.length} product{list.length === 1 ? '' : 's'}</span></div>
+      <header className={group ? 'catalog-group-intro' : 'page-title'}>
+        <h1>{title}</h1>
+        {group ? <>
+          <p>{prices.length ? <>Browse {group.name} at GearGrid. Prices range from {money(Math.min(...prices), shop.currency)} to {money(Math.max(...prices), shop.currency)}.</> : <>Browse {group.name} at GearGrid.</>}</p>
+          {group.categories.length > 0 && <nav className="chips" aria-label={`${group.name} categories`}>
+            <button type="button" className={`chip ${!c ? 'on' : ''}`} onClick={() => set({ c: '', b: '' })}>All {group.name}</button>
+            {group.categories.map((y) => <button key={y.id} type="button" className={`chip ${c === y.id ? 'on' : ''}`} onClick={() => set({ c: y.id, b: '' })}>{y.name}</button>)}
+          </nav>}
+        </> : <span className="muted">{list.length} product{list.length === 1 ? '' : 's'}</span>}
+      </header>
       <div className="shop-layout">
         <aside id="catalog-filters" className={`filters ${open ? 'open' : ''}`} aria-label="Filters">
           <div className="card">
             <h3>Groups</h3>
             <div className="filter-list">
-              <button type="button" className={!g ? 'on' : ''} onClick={() => set({ g: '', c: '' })}>All <small>{products.length}</small></button>
+              <button type="button" className={!g ? 'on' : ''} onClick={() => set({ g: '', c: '', b: '' })}>All <small>{products.length}</small></button>
               {groups.map((x) => (
                 <div key={x.id}>
-                  <button type="button" className={g === x.id && !c ? 'on' : ''} onClick={() => set({ g: x.id, c: '' })}>{x.name} <small>{count((p) => p.group_id === x.id)}</small></button>
-                  {g === x.id && x.categories.map((y) => <button key={y.id} type="button" className={`sub ${c === y.id ? 'on' : ''}`} onClick={() => set({ g: x.id, c: y.id })}>{y.name} <small>{count((p) => p.category_id === y.id)}</small></button>)}
+                  <button type="button" className={g === x.id && !c ? 'on' : ''} onClick={() => set({ g: x.id, c: '', b: '' })}>{x.name} <small>{count((p) => p.group_id === x.id)}</small></button>
+                  {g === x.id && x.categories.map((y) => <button key={y.id} type="button" className={`sub ${c === y.id ? 'on' : ''}`} onClick={() => set({ g: x.id, c: y.id, b: '' })}>{y.name} <small>{count((p) => p.category_id === y.id)}</small></button>)}
                 </div>
               ))}
             </div>
           </div>
           <div className="card"><h3>Price range (BDT)</h3><form className="price-range" onSubmit={e=>{e.preventDefault();const form=new FormData(e.currentTarget);set({min:form.get("min")||"",max:form.get("max")||""});}}><label>Minimum<input name="min" aria-label="Minimum price" type="number" min="0" defaultValue={minPrice} key={"min-"+minPrice} placeholder="0"/></label><label>Maximum<input name="max" aria-label="Maximum price" type="number" min="0" defaultValue={maxPrice} key={"max-"+maxPrice} placeholder="Any"/></label><button className="btn btn-primary" type="submit">Apply price</button></form>{(minPrice||maxPrice)&&<button className="clear-price" type="button" onClick={()=>set({min:"",max:""})}>Clear price range</button>}</div>
-          {brands.length > 0 && <div className="card">
+          {visibleBrands.length > 0 && <div className="card">
             <h3>Brands</h3>
             <div className="filter-list">
               <button type="button" className={!b ? 'on' : ''} onClick={() => set({ b: '' })}>All brands</button>
-              {brands.map((x) => <button key={x.id} type="button" className={b === x.id ? 'on' : ''} onClick={() => set({ b: x.id })}>{x.name} <small>{count((p) => p.brand_id === x.id)}</small></button>)}
+              {visibleBrands.map((x) => <button key={x.id} type="button" className={b === x.id ? 'on' : ''} onClick={() => set({ b: x.id })}>{x.name} <small>{count((p) => p.brand_id === x.id)}</small></button>)}
             </div>
           </div>}
         </aside>
         <section>
           <div className="toolbar">
+            <strong>{list.length} {list.length === 1 ? 'product' : 'products'}</strong>
             <button type="button" className="btn filters-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="catalog-filters">{open ? 'Hide filters' : 'Filters'}{(g || b) ? ' •' : ''}</button>
             <label className="check"><input type="checkbox" checked={inStock} onChange={(e) => set({ stock: e.target.checked ? '1' : '' })} /> In stock only</label>
             <select value={sort} onChange={(e) => set({ sort: e.target.value === 'new' ? '' : e.target.value })} aria-label="Sort">{SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
           </div>
-          {group && group.categories.length > 0 && <nav className="chips" style={{ marginBottom: 12 }} aria-label={`${group.name} categories`}>
-            <button type="button" className={`chip ${!c ? 'on' : ''}`} onClick={() => set({ c: '' })}>All {group.name}</button>
-            {group.categories.map((y) => <button key={y.id} type="button" className={`chip ${c === y.id ? 'on' : ''}`} onClick={() => set({ c: y.id })}>{y.name}</button>)}
-          </nav>}
           {list.length ? <div className="grid retail-product-grid">{list.map((p) => <ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency} />)}</div>
-            : <Empty title={offers ? "No offers found" : "No products found"}><button type="button" className="btn" onClick={() => setParams({}, { replace: true })}>Clear search and filters</button></Empty>}
+            : <Empty title={offers ? "No offers found" : "No products found"}><button type="button" className="btn" onClick={() => setParams(g ? { g } : {}, { replace: true })}>Clear search and filters</button></Empty>}
         </section>
       </div>
     </>

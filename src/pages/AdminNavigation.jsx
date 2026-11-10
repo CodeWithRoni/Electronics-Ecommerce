@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 
 const sections = [
-  ['dashboard', 'Dashboard & Analytics', 'dashboard', [['overview', 'Overview'], [null, 'Live Monitoring']]],
+  ['dashboard', 'Dashboard & Analytics', 'dashboard', [['overview', 'Overview'], ['monitoring', 'Live Monitoring']]],
   ['catalog', 'Catalog Management', 'box', [['products', 'Products & inventory'], ['taxonomy', 'Categories & Subcategories'], [null, 'Attributes & Variants'], ['brands', 'Brands / Manufacturers']]],
-  ['orders', 'Order Fulfillment', 'orders', [['orders', 'All Orders'], [null, 'Invoices & Slips'], [null, 'Returns & Exchanges']]],
-  ['crm', 'Customer Relationship Management', 'user', [['customers', 'Customer Directory'], [null, 'Customer Segments'], [null, 'Support Tickets']]],
+  ['orders', 'Order Fulfillment', 'orders', [['orders', 'All Orders'], ['documents', 'Invoices & Slips'], [null, 'Returns & Exchanges']]],
+  ['crm', 'Customer Relationship Management', 'user', [['customers', 'Customer Directory'], ['segments', 'Customer Segments'], [null, 'Support Tickets']]],
   ['marketing', 'Marketing & Promotions', 'gift', [[null, 'Discounts & Coupons'], ['banners', 'Flash Sales & Banners'], [null, 'Email & SMS Campaigns']]],
-  ['content', 'Content Management', 'footer', [[null, 'Pages'], [null, 'Blog / Articles'], [null, 'Media Library'], ['footer', 'Footer Settings']]],
+  ['content', 'Content Management', 'footer', [[null, 'Pages'], [null, 'Blog / Articles'], ['media', 'Media Library'], ['footer', 'Footer Settings']]],
   ['financials', 'Financials & Reports', 'reports', [['reports', 'Sales Reports'], [null, 'Tax & Shipping Reports'], [null, 'Payouts & Ledger']]],
   ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], [null, 'Payment Gateways'], [null, 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
   ['access', 'Access Control & Security', 'lock', [[null, 'Admin Users'], [null, 'Roles & Permissions'], [null, 'Activity Logs']]],

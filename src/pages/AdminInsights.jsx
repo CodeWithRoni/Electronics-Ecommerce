@@ -17,8 +17,9 @@ function weekOf(day) {
   return date.toISOString().slice(0, 10);
 }
 
-export function Customers({ orders }) {
+export function Customers({ orders, segmented = false }) {
   const [query, setQuery] = useState('');
+  const [segment, setSegment] = useState('all');
   const directory = new Map();
   for (const order of orders) {
     if (!order.phone) continue;
@@ -27,10 +28,12 @@ export function Customers({ orders }) {
     if (order.status === 'delivered') entry.delivered += Number(order.total || 0);
     directory.set(order.phone, entry);
   }
-  const customers = [...directory.values()].filter(({ name, phone }) => [name, phone].some((value) => String(value || '').toLowerCase().includes(query.trim().toLowerCase())));
+  const customers = [...directory.values()].filter(({ name, phone, orders }) =>
+    (segment === 'all' || (segment === 'repeat' ? orders > 1 : orders === 1))
+    && [name, phone].some((value) => String(value || '').toLowerCase().includes(query.trim().toLowerCase())));
   return <section className="console-panel">
     <div className="console-panel-heading"><div><h2>Customers from orders</h2><p>Grouped by phone number from the latest {orders.length} orders.</p></div></div>
-    <div className="console-toolbar"><input type="search" aria-label="Find customer" placeholder="Search name or phone" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+    <div className="console-toolbar"><input type="search" aria-label="Find customer" placeholder="Search name or phone" value={query} onChange={(event) => setQuery(event.target.value)} />{segmented && <select aria-label="Customer segment" value={segment} onChange={(event) => setSegment(event.target.value)}><option value="all">All customers</option><option value="single">One order</option><option value="repeat">Repeat customers</option></select>}</div>
     {customers.length ? <div className="console-table-scroll"><table className="console-table">
       <thead><tr><th>Customer</th><th>Phone</th><th>Orders</th><th>Delivered order value</th></tr></thead>
       <tbody>{customers.map((entry) => <tr key={entry.phone}><td>{entry.name}</td><td>{entry.phone}</td><td>{entry.orders}</td><td>{money(entry.delivered, 'BDT')}</td></tr>)}</tbody>
