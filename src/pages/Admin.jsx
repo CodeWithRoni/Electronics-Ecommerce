@@ -351,7 +351,7 @@ export default function Admin() {
   const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
   const heading = {
     overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
-    taxonomy: 'Categories & Subcategories', brands: 'Brands / Manufacturers', settings: 'General Settings',
+    taxonomy: 'Categories & Subcategories', settings: 'General Settings',
     footer: 'Footer Settings', banners: 'Flash Sales & Banners', customers: 'Customer Directory',
     reports: 'Sales Reports', health: 'System Health', monitoring: 'Live Monitoring',
     documents: 'Invoices & Slips', segments: 'Customer Segments', media: 'Media Library',
@@ -363,7 +363,6 @@ export default function Admin() {
     taxonomy: 'Manage categories, subcategories and brands or move them in bulk with Excel.',
     settings: 'Control header branding, homepage banner and inventory alerts.',
     footer: 'Manage support, navigation, contact details, app buttons and social links.',
-    brands: 'Organize your catalog by brand or manufacturer.',
     banners: 'Edit your homepage banner and manage product offers.',
     customers: 'Review customer activity from recent orders.',
     reports: 'Review delivered sales and order counts.',
@@ -419,8 +418,8 @@ export default function Admin() {
         : tab === 'media' ? <MediaLibrary products={products} settings={store.settings} upload={upload} busy={busy} />
         : tab === 'customers' || tab === 'segments' ? <Customers key={tab} orders={orders} segmented={tab === 'segments'} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
         <section className="console-panel"><h2>Store API</h2><p>Last successful data sync: {lastSync?.toLocaleString()}.</p></section>
-      ) : tab === 'taxonomy' || tab === 'brands' ? (
-        <AdminTaxonomy key={tab} brandOnly={tab === 'brands'} groups={store.groups} brands={store.brands} busy={busy} Icon={Icon}
+      ) : tab === 'taxonomy' ? (
+        <AdminTaxonomy groups={store.groups} brands={store.brands} busy={busy} Icon={Icon}
           importRows={(kind, rows, done) => run(async () => {
             const { added, skipped } = await request(token, 'admin.taxonomy.import', { kind, rows });
             await refresh();

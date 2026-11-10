@@ -118,21 +118,21 @@ function TaxonomyCard({ kind, items, groups, busy, save, remove, importRows, Ico
   </section>;
 }
 
-export default function AdminTaxonomy({ groups, brands, brandOnly, Icon, ...actions }) {
+export default function AdminTaxonomy({ groups, brands, Icon, ...actions }) {
   const categories = groups.flatMap((group) => group.categories.map((category) => ({
     ...category, group_id: group.id, group_name: group.name,
   })));
   const lists = { group: groups, category: categories, brand: brands };
 
-  return <div className={`taxonomy-grid${brandOnly ? ' taxonomy-grid-single' : ''}`}>
-    {(brandOnly ? ['brand'] : Object.keys(sections)).map((kind) =>
+  return <div className="taxonomy-grid">
+    {Object.keys(sections).map((kind) =>
       <TaxonomyCard key={kind} kind={kind} items={lists[kind]} groups={groups} Icon={Icon} {...actions} />)}
-    {!brandOnly && <section className="console-panel taxonomy-card" aria-labelledby="taxonomy-attributes">
+    <section className="console-panel taxonomy-card" aria-labelledby="taxonomy-attributes">
       <header className="taxonomy-card-heading">
         <div className="taxonomy-card-icon"><Icon name="settings" size={19} /></div>
         <div className="taxonomy-card-title"><h2 id="taxonomy-attributes">Attributes &amp; Variants</h2><span>Planned</span></div>
       </header>
       <p className="taxonomy-card-description">Product options such as color, size and configuration.</p>
-    </section>}
+    </section>
   </div>;
 }

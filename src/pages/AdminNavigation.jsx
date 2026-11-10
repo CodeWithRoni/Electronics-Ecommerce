@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 const sections = [
   ['dashboard', 'Dashboard & Analytics', 'dashboard', [['overview', 'Overview'], ['monitoring', 'Live Monitoring']]],
-  ['catalog', 'Catalog Management', 'box', [['products', 'Products & inventory'], ['taxonomy', 'Categories & Subcategories'], ['brands', 'Brands / Manufacturers']]],
+  ['catalog', 'Catalog Management', 'box', [['products', 'Products & inventory'], ['taxonomy', 'Categories & Subcategories']]],
   ['orders', 'Order Fulfillment', 'orders', [['orders', 'All Orders'], ['documents', 'Invoices & Slips'], [null, 'Returns & Exchanges']]],
   ['crm', 'Customer Relationship Management', 'user', [['customers', 'Customer Directory'], ['segments', 'Customer Segments'], [null, 'Support Tickets']]],
   ['marketing', 'Marketing & Promotions', 'gift', [[null, 'Discounts & Coupons'], ['banners', 'Flash Sales & Banners'], [null, 'Email & SMS Campaigns']]],
