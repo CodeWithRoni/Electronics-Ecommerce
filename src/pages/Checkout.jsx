@@ -2,17 +2,26 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop, cartLines } from '../lib/store';
 import { api, newRef } from '../lib/api';
+import { customerAuth } from '../lib/customerAuth';
 import { money, qty as fqty, bdPhone } from '../lib/format';
 import { Empty } from '../components/ui';
 
 const SAVED = 'electronics_shop_customer'; // name / phone / address remembered on this device for the next order
 const readSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED)) || {}; } catch { return {}; } };
 
-export default function Checkout() {
+function deliveryFields(address) {
+  return { name: address.name, phone: address.phone, address: [address.street, address.city, address.postcode].filter(Boolean).join(', ') };
+}
+
+export default function Checkout({ session }) {
   const { catalog, cart, clearCart, load } = useShop();
   const navigate = useNavigate();
   const { shop } = catalog;
-  const saved = readSaved();
+  const profile = session?.user.user_metadata;
+  const addresses = Array.isArray(profile?.address_book) ? profile.address_book : [];
+  const saved = !session ? readSaved() : addresses[0] ? deliveryFields(addresses[0]) : {
+    name: [profile?.first_name, profile?.last_name].filter(Boolean).join(' '), phone: profile?.phone,
+  };
   const [f, setF] = useState({ name: saved.name || '', phone: saved.phone || '', address: saved.address || '', area: saved.area || 'inside', note: '', payment: shop.cod ? 'cod' : 'bkash', bkash_sender: '', bkash_trx: '', company: '' });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -45,13 +54,15 @@ export default function Checkout() {
     if (!check()) return;
     setBusy(true);
     try {
+      const { data, error } = await customerAuth.getSession();
+      if (error) throw error;
       const r = await api('shop.order.create', {
         name: f.name, phone: f.phone, address: f.address, area: f.area, note: f.note, payment: f.payment,
         bkash_sender: f.payment === 'bkash' ? f.bkash_sender : '', bkash_trx: f.payment === 'bkash' ? f.bkash_trx.trim() : '',
         company: f.company, client_ref: ref.current,
         items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty }))
-      });
-      try { localStorage.setItem(SAVED, JSON.stringify({ name: f.name.trim(), phone: bdPhone(f.phone), address: f.address.trim(), area: f.area })); } catch { /* private mode */ }
+      }, data.session?.access_token);
+      if (!session) try { localStorage.setItem(SAVED, JSON.stringify({ name: f.name.trim(), phone: bdPhone(f.phone), address: f.address.trim(), area: f.area })); } catch { /* private mode */ }
       try { sessionStorage.setItem(`electronics_order_${r.order_no}`, JSON.stringify({ ...r, phone: bdPhone(f.phone), lines: lines.map((l) => ({ name: l.product.name, qty: l.qty, unit: l.product.unit, total: l.qty * l.product.price })) })); } catch { /* fine */ }
       clearCart();
       load();
@@ -71,6 +82,19 @@ export default function Checkout() {
           <section className="card">
             <h2 style={{ marginBottom: 14 }}>Delivery details</h2>
             <div className="form-grid">
+              {addresses.length > 0 && <label className="field wide"><span>Saved addresses</span>
+                <select defaultValue={addresses[0]?.id} onChange={(event) => {
+                  const address = addresses.find(({ id }) => id === event.target.value);
+                  if (address) {
+                    setF((form) => ({ ...form, ...deliveryFields(address) }));
+                    setErrors({});
+                  } else {
+                    setF((form) => ({ ...form, address: '' }));
+                  }
+                }}>
+                  <option value="">Enter a different address</option>
+                  {addresses.map((address) => <option value={address.id} key={address.id}>{address.street}, {address.city}</option>)}
+                </select></label>}
               <label className="field"><span>Your name</span><input value={f.name} onChange={set('name')} autoComplete="name" aria-invalid={!!errors.name} /><Err k="name" /></label>
               <label className="field"><span>Mobile number</span><input value={f.phone} onChange={set('phone')} inputMode="tel" autoComplete="tel" placeholder="01XXXXXXXXX" aria-invalid={!!errors.phone} /><Err k="phone" /></label>
               <label className="field wide"><span>Full address</span><textarea value={f.address} onChange={set('address')} autoComplete="street-address" placeholder="House, road, area, thana, district" aria-invalid={!!errors.address} /><Err k="address" /></label>

@@ -1,9 +1,11 @@
 import { API_URL } from '../config';
-export async function api(action, payload = {}) {
+export async function api(action, payload = {}, token) {
   if (!API_URL) throw new Error('Store backend is not configured yet. Set VITE_API_URL to your independent API endpoint.');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
   let res;
   try {
-    res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, payload }) });
+    res = await fetch(API_URL, { method: 'POST', headers, body: JSON.stringify({ action, payload }) });
   } catch { throw new Error('Cannot reach the store server. Check your internet connection.'); }
   let body;
   try { body = await res.json(); } catch { throw new Error('The store server returned an invalid response.'); }

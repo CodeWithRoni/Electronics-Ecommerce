@@ -38,6 +38,10 @@ function departmentIcon(name) {
 }
 
 const icons = {
+  key: <><circle cx="8" cy="10" r="4" /><path d="M12 10h9m-3 0v4m3-4v3" /></>,
+  document: <path d="M5 3h9l5 5v13H5zM14 3v6h5M8 13h8m-8 4h8" />,
+  star: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z" />,
+  alert: <><circle cx="12" cy="12" r="9" /><path d="M12 8v5m0 3h.01" /></>,
   laptop: <><rect x="5" y="4" width="14" height="12" rx="1.5" /><path d="M5 16 2 20h20l-3-4M10 18h4" /></>,
   desktop: <><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M10 7h4m-4 3h4" /><circle cx="12" cy="17" r="1" /></>,
   monitor: <><rect x="2.5" y="3" width="19" height="13" rx="2" /><path d="M12 16v5m-5 0h10" /></>,

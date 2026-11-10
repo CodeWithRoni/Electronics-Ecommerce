@@ -36,7 +36,7 @@ export function createHandler(env, db, auth, consoleData, upload) {
     return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, attributes, settings: storefrontSettings };
   }
 
-  function createOrder(payload) {
+  function createOrder(payload, customerId) {
     const phone = phoneNorm(payload.phone);
     const name = String(payload.name || '').trim();
     const address = String(payload.address || '').trim();
@@ -62,7 +62,7 @@ export function createHandler(env, db, auth, consoleData, upload) {
       note: String(payload.note || '').slice(0, 300), payment: payload.payment,
       bkash_sender: String(payload.bkash_sender || ''), bkash_trx: String(payload.bkash_trx || ''),
       delivery: shop.delivery[area], quantities: Object.fromEntries(quantities),
-    });
+    }, customerId);
   }
 
   function admin(action, payload) {
@@ -176,9 +176,19 @@ export function createHandler(env, db, auth, consoleData, upload) {
       if (action === 'shop.catalog') return ok(await catalog());
       if (action === 'shop.order.track')
         return ok(await db('track', { order_no: String(payload.order_no || ''), phone: phoneNorm(payload.phone) }));
+      if (action === 'customer.orders') {
+        const customerId = await auth.customerId(request.headers.get('Authorization'));
+        if (!customerId) return fail('Please log in to view your orders.', 401);
+        const page = payload.page ?? 0;
+        if (!Number.isSafeInteger(page) || page < 0 || page > 10000) return fail('Invalid order page');
+        return ok(await db('customer_orders', { p_customer_id: customerId, p_page: page }));
+      }
       if (action === 'shop.order.create') {
         if (env.DATABASE_READ_ONLY === '1') return fail('Checkout is temporarily unavailable', 503);
-        return ok(await createOrder(payload));
+        const header = request.headers.get('Authorization');
+        const customerId = header ? await auth.customerId(header) : null;
+        if (header && !customerId) return fail('Please log in again before placing your order.', 401);
+        return ok(await createOrder(payload, customerId));
       }
       if (action === 'admin.sign_in') return ok(await auth.signIn(payload.login, payload.password));
       if (typeof action === 'string' && action.startsWith('admin.')) {

@@ -1,11 +1,11 @@
 import { RetailIcon } from '../components/retail';
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { customerAuth, accountRedirect } from '../lib/customerAuth';
 import { brandIcon } from '../lib/brand';
 import { footerSettings } from '../lib/footer';
 
-function Field({ label, name, type = 'text', showRequired = false, ...props }) {
+export function Field({ label, name, type = 'text', showRequired = false, ...props }) {
   return <label className="account-field"><span>{label}{showRequired && <span className="account-required" aria-hidden="true"> *</span>}</span>
     <input name={name} type={type} placeholder={label} required {...props} />
   </label>;
@@ -45,26 +45,20 @@ function RegistrationConfirmation({ confirmed, email, shopName }) {
   </div>;
 }
 
-export default function Account({ page, shop, settings, theme, toggleTheme }) {
+export default function Account({ page, shop, settings, session }) {
   const [details, setDetails] = useState(null);
-  const [session, setSession] = useState(undefined);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { state } = useLocation();
-  useEffect(() => {
-    const { data: { subscription } } = customerAuth.onAuthStateChange((_event, session) => setSession(session));
-    return () => subscription.unsubscribe();
-  }, []);
 
   const footer = footerSettings(settings, shop);
   const privacyLink = footer.links.find(({ label }) => /privacy/i.test(label))?.url;
   const register = page === 'register';
   const reset = page === 'reset';
   const forgot = page === 'forgot';
-  const signedIn = session && !reset && page !== 'privacy';
-  const title = page === 'privacy' ? 'Privacy Policy' : signedIn ? 'My Account' : register ? (details ? 'Set Your Password' : 'Register Account') : forgot ? 'Forgotten Password' : reset ? 'Reset Password' : 'Account Login';
+  const title = page === 'privacy' ? 'Privacy Policy' : register ? (details ? 'Set Your Password' : 'Register Account') : forgot ? 'Forgotten Password' : reset ? 'Reset Password' : 'Account Login';
 
   async function submit(event) {
     event.preventDefault();
@@ -110,32 +104,17 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
 
   if (page === 'check-email') return <RegistrationConfirmation confirmed={state?.confirmed} email={state?.email} shopName={shop.name} />;
 
+  if (session && !reset && page !== 'privacy') return <Navigate to="/account/profile" replace />;
+
   return <div className="account-page">
-    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home">{register ? <RetailIcon name="home" size={15} /> : 'Home'}</Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>{signedIn ? 'Profile' : title}</span></nav>
+    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home"><RetailIcon name="home-solid" size={15} /></Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>{title}</span></nav>
     <section className="account-form" aria-labelledby="account-heading">
       <h1 id="account-heading">{title}</h1>
       {page === 'privacy' ? <>
         <p>{shop.name} uses your name, email and telephone to manage your account and communicate with you about it. Account credentials are managed by Supabase Auth. When you place an order, your contact and delivery details are used to fulfill it.</p>
         {footer.email && <p>For privacy requests, email <a href={`mailto:${footer.email}`}>{footer.email}</a>.</p>}
         <Link to="/account/register">Return to registration</Link>
-      </> : session === undefined ? <p role="status">Loading account…</p> : signedIn ? <>
-        <p>{[session.user.user_metadata?.first_name, session.user.user_metadata?.last_name].filter(Boolean).join(' ')}</p>
-        <p>{session.user.email || session.user.phone}</p>
-        <div className="account-links">
-          <Link to="/track">Track an order</Link><Link to="/wishlist">Wishlist</Link>
-          <button type="button" className="account-link" onClick={toggleTheme}>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</button>
-        </div>
-        <button type="button" className="account-primary" disabled={busy} onClick={async () => {
-          setBusy(true);
-          setError('');
-          try {
-            const { error } = await customerAuth.signOut({ scope: 'local' });
-            if (error) throw error;
-            navigate('/account/login', { replace: true });
-          } catch (issue) { setError(issue.message); }
-          finally { setBusy(false); }
-        }}>Sign out</button>
-      </> : reset && !session ? <p>This reset link is unavailable or expired. <Link to="/account/forgot">Request a new link</Link>.</p> :
+      </> : session === undefined ? <p role="status">Loading account…</p> : reset && !session ? <p>This reset link is unavailable or expired. <Link to="/account/forgot">Request a new link</Link>.</p> :
         <form onSubmit={submit}>
           {register && !details ? <>
             <div className="account-name-fields">
@@ -157,8 +136,8 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
         </form>}
       {error && <p className="account-error" role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
-      {!signedIn && page === 'login' && <><div className="account-divider">Don't have an account?</div><Link className="account-outline" to="/account/register">Create Your Account</Link></>}
-      {!signedIn && (register || forgot) && <><div className="account-divider">Already have an account?</div><p>{register ? 'If you already have an account with us, Please login at the' : 'Return to the'} <Link to="/account/login">login page</Link>.</p></>}
+      {session === null && page === 'login' && <><div className="account-divider">Don't have an account?</div><Link className="account-outline" to="/account/register">Create Your Account</Link></>}
+      {session === null && (register || forgot) && <><div className="account-divider">Already have an account?</div><p>{register ? 'If you already have an account with us, Please login at the' : 'Return to the'} <Link to="/account/login">login page</Link>.</p></>}
     </section>
   </div>;
 }

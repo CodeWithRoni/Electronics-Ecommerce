@@ -1,34 +1,41 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { RetailIcon } from '../components/retail';
 import { downloadBuildImage, PcBuildPrint } from '../components/PcBuildExport';
 import { API_URL } from '../config';
+import { customerAuth } from '../lib/customerAuth';
 import { brandLogo } from '../lib/brand';
 import { money } from '../lib/format';
 import { footerSettings } from '../lib/footer';
 import { buildCompatibility, corePcSlots, pcSlots, peripheralPcSlots, productSlot } from '../lib/pcBuilder';
 import { useShop } from '../lib/store';
 
-const storageKey = `geargrid_pc_build:${API_URL}`;
-const savedKey = `${storageKey}:saved`;
+const guestStorageKey = `geargrid_pc_build:${API_URL}`;
+const savedKey = `${guestStorageKey}:saved`;
 const slotGroups = [
   { title: 'Core Components', slots: corePcSlots },
   { title: 'Peripherals & Others', slots: peripheralPcSlots },
 ];
 const powerSlots = [...corePcSlots.map(({ id }) => id).filter((id) => id !== 'power'), 'case_cooler', 'network_adapter'];
 
-function savedBuild(key = storageKey) {
+function savedBuild(key) {
   try {
     const value = JSON.parse(localStorage.getItem(key));
     return Object.fromEntries(pcSlots.filter(({ id }) => typeof value?.[id] === 'string').map(({ id }) => [id, value[id]]));
   } catch { return {}; }
 }
 
-export default function PcBuilder() {
+export default function PcBuilder({ session }) {
   const { shop, groups, products, settings } = useShop((state) => state.catalog);
   const addBuild = useShop((state) => state.addBuild);
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(savedBuild);
+  const [searchParams] = useSearchParams();
+  const buildId = searchParams.get('saved');
+  const builds = session?.user.user_metadata?.saved_pcs;
+  const accountBuild = Array.isArray(builds) ? builds.find(({ id }) => id === buildId) : undefined;
+  const [saving, setSaving] = useState(false);
+  const storageKey = session ? `${guestStorageKey}:${session.user.id}` : guestStorageKey;
+  const [selected, setSelected] = useState(() => accountBuild?.parts || savedBuild(storageKey));
   const [saved, setSaved] = useState(() => savedBuild(savedKey));
   const [choosing, setChoosing] = useState('');
   const [hideEmpty, setHideEmpty] = useState(false);
@@ -37,8 +44,11 @@ export default function PcBuilder() {
   const [exporting, setExporting] = useState(false);
   const dialog = useRef(null);
   useEffect(() => {
+    if (accountBuild) setSelected(accountBuild.parts);
+  }, [accountBuild]);
+  useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(selected)); } catch { /* storage unavailable */ }
-  }, [selected]);
+  }, [selected, storageKey]);
   useEffect(() => {
     if (choosing && !dialog.current.open) dialog.current.showModal();
   }, [choosing]);
@@ -80,6 +90,36 @@ export default function PcBuilder() {
     else navigate('/cart');
   };
 
+  async function savePC() {
+    setError('');
+    setNotice('');
+    if (!session) {
+      try {
+        localStorage.setItem(savedKey, JSON.stringify(selected));
+        setSaved(selected);
+        setNotice('Build saved in this browser.');
+      } catch { setError('This browser could not save your build.'); }
+      return;
+    }
+    const list = Array.isArray(builds) ? builds : [];
+    if (!accountBuild && list.length >= 10) {
+      setError('You can save up to 10 PCs. Delete a saved PC from your account to make room.');
+      return;
+    }
+    const name = window.prompt('Name your saved PC', accountBuild?.name || 'My PC build')?.trim();
+    if (!name) return;
+    setSaving(true);
+    try {
+      const build = { id: accountBuild?.id || crypto.randomUUID(), name: name.slice(0, 80), date: new Date().toISOString(), parts: selected };
+      const saved_pcs = [build, ...list.filter(({ id }) => id !== build.id)];
+      const { error } = await customerAuth.updateUser({ data: { saved_pcs } });
+      if (error) throw error;
+      navigate(`/pc-builder?saved=${encodeURIComponent(build.id)}`, { replace: true });
+      setNotice('Build saved to your account.');
+    } catch (issue) { setError(issue.message || 'Could not save your build.'); }
+    finally { setSaving(false); }
+  }
+
   return <div className="builder-page">
     <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home"><RetailIcon name="home-solid" size={15} /></Link><span aria-hidden="true">/</span><span>PC Builder</span></nav>
     <section className="builder-sheet">
@@ -87,13 +127,9 @@ export default function PcBuilder() {
         <span className="builder-brand"><img src={settings?.header_logo || brandLogo} alt={shop.name} /></span>
         <div>
           <button type="button" disabled={!chosen.length || unavailable || mismatch} onClick={add}><RetailIcon name="box" size={19} />Add to Cart</button>
-          <button type="button" disabled={!chosen.length} onClick={() => {
-            try {
-              localStorage.setItem(savedKey, JSON.stringify(selected));
-              setSaved(selected);
-              setNotice('Build saved in this browser.');
-            } catch { setError('This browser could not save your build.'); }
-          }}><RetailIcon name="storage" size={19} />Save PC</button>
+          <button type="button" disabled={!chosen.length || saving || session === undefined} onClick={savePC}>
+            <RetailIcon name="storage" size={19} />{saving ? 'Saving…' : 'Save PC'}
+          </button>
           <button type="button" onClick={() => window.print()}><RetailIcon name="printer" size={19} />Print</button>
           <button type="button" disabled={exporting} onClick={async () => {
             setError('');
@@ -143,7 +179,7 @@ export default function PcBuilder() {
           {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
           {(!hideEmpty || Object.values(selected).some(Boolean) || Object.values(saved).some(Boolean)) && <div className="builder-secondary">
             <button type="button" className="btn" disabled={!Object.values(selected).some(Boolean)} onClick={() => change({})}>Clear build</button>
-            {Object.values(saved).some(Boolean) && <button type="button" className="btn" onClick={() => change(saved)}>Load saved PC</button>}
+            {Object.values(saved).some(Boolean) && <button type="button" className="btn" onClick={() => change(saved)}>{session ? 'Load browser-saved PC' : 'Load saved PC'}</button>}
           </div>}
         </div>
       </div>

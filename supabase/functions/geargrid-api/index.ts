@@ -18,9 +18,14 @@ env.SUPABASE_PROJECT_REF = url ? new URL(url).hostname.split('.')[0] : '';
 const auth = createAdminAuth(url, publicKey, key, (params) => rpc(url, key, 'geargrid_admin_lookup', params));
 Deno.serve(createHandler(
   env,
-  (action, payload) => action === 'catalog' || action === 'admin_products'
-    ? rpc(url, key, 'geargrid_products_with_attributes', { p_active_only: action === 'catalog' })
-    : supabaseData(url, key, action, payload),
+  (action, payload, customerId) => {
+    if (action === 'catalog' || action === 'admin_products')
+      return rpc(url, key, 'geargrid_products_with_attributes', { p_active_only: action === 'catalog' });
+    if (action === 'place_order')
+      return rpc(url, key, 'geargrid_customer_place_order', { p_payload: payload, p_customer_id: customerId });
+    if (action === 'customer_orders') return rpc(url, key, 'geargrid_customer_orders', payload);
+    return supabaseData(url, key, action, payload);
+  },
   auth,
   (action, payload = {}) => {
     if (action === 'settings_patch') return rpc(url, key, 'geargrid_settings_patch', { p_patch: payload });

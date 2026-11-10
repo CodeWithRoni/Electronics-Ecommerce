@@ -21,7 +21,7 @@ function fitDropdown(event) {
   menu.dataset.brandsLeft = right - previousShift + shift + columnWidth > viewport - 8;
 }
 
-export default function StoreHeader({ settings, name, departments, q, setQ, search, menuOpen, setMenuOpen, count, groups = [], brands = [], products = [] }) {
+export default function StoreHeader({ settings, name, departments, q, setQ, search, menuOpen, setMenuOpen, count, session, logout, signingOut, groups = [], brands = [], products = [] }) {
   const [expanded, setExpanded] = useState({});
   const [dismissed, setDismissed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -106,9 +106,15 @@ export default function StoreHeader({ settings, name, departments, q, setQ, sear
         <Link to="/track" className="retail-quick-action">
           <HeaderAction icon="box" title="Track Order" caption="Order status" />
         </Link>
-        <Link to="/account/login" className="retail-quick-action">
-          <HeaderAction icon="user" title="Account" caption="Register or login" />
-        </Link>
+        {session ? <div className="retail-quick-action retail-signed-in">
+          <Link to="/account/profile" aria-label="My Account"><RetailIcon name="user" size={21} /></Link>
+          <span><Link className="retail-account-title" to="/account/profile">Account</Link>
+            <span className="retail-account-actions"><Link to="/account/profile">Profile</Link><span aria-hidden="true"> / </span>
+              <button type="button" onClick={logout} disabled={signingOut}>Logout</button></span>
+          </span>
+        </div> : <Link to="/account/login" className="retail-quick-action">
+          <HeaderAction icon="user" title="Account" caption={session === null ? 'Register or login' : ''} />
+        </Link>}
       </div>
       <Link to="/pc-builder" className="retail-builder-link">PC Builder</Link>
       <Link to="/cart" className="icon-btn retail-top-cart" aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}>
@@ -156,13 +162,13 @@ const mobileShortcuts = [
   { to: '/track', label: 'Track Order', icon: 'box' },
   { to: '/pc-builder', label: 'PC Builder', icon: 'desktop' },
   { to: '/wishlist', label: 'Wishlist', icon: 'heart' },
-  { to: '/account/login', label: 'Account', icon: 'user' },
 ];
 
-export function MobileShopNav() {
+export function MobileShopNav({ session }) {
   const { pathname, search } = useLocation();
+  const account = { to: session ? '/account/profile' : '/account/login', label: session ? 'Profile' : 'Account', icon: 'user' };
   return <nav className="retail-mobile-nav" aria-label="Shopping navigation">
-    {mobileShortcuts.map(({ to, label, icon }) => <Link key={to} to={to} aria-current={pathname + search === to ? 'page' : undefined}>
+    {[...mobileShortcuts, account].map(({ to, label, icon }) => <Link key={to} to={to} aria-current={(pathname + search === to || (to === account.to && session && pathname.startsWith('/account/profile/'))) ? 'page' : undefined}>
       <RetailIcon name={icon} size={20} /><span>{label}</span>
     </Link>)}
   </nav>;

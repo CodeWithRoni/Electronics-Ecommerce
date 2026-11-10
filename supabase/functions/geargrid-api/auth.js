@@ -20,6 +20,14 @@ export function createAdminAuth(url, publicKey, serverKey, lookup) {
     return response.json();
   }
 
+  async function customerId(header) {
+    if (!header?.startsWith('Bearer ')) return null;
+    const token = header.slice(7);
+    if (!token || token.length > 8192) return null;
+    const user = await authRequest('user', { token });
+    return user?.id || null;
+  }
+
   return {
     async signIn(login, password) {
       if (typeof login !== 'string' || typeof password !== 'string' || !password || password.length > 1024)
@@ -40,12 +48,11 @@ export function createAdminAuth(url, publicKey, serverKey, lookup) {
       return { access_token: session.access_token };
     },
 
+    customerId,
+
     async canManage(header) {
-      if (!header?.startsWith('Bearer ')) return false;
-      const token = header.slice(7);
-      if (!token || token.length > 8192) return false;
-      const user = await authRequest('user', { token });
-      return Boolean(user?.id && (await lookup({ p_user_id: user.id }))?.allowed);
+      const id = await customerId(header);
+      return Boolean(id && (await lookup({ p_user_id: id }))?.allowed);
     },
   };
 }
