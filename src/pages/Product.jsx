@@ -37,13 +37,14 @@ export default function Product() {
             {p.warranty_days > 0 && <span>{warrantyText(p.warranty_days)}</span>}
             {cat && <span>{cat.name}</span>}
           </div>
-          {p.in_stock ? (
+          {p.demo && <p className="demo-product-notice">Sample product for website preview. Price and specifications are illustrative; ordering is disabled.</p>}
+          {p.in_stock && !p.demo ? (
             <div className="buy">
               <Stepper value={n} onChange={setN} min={step} step={step} max={p.decimal ? 1000 : 50} label={`Quantity${p.decimal ? ` (${p.unit})` : ''}`} />
               <button type="button" className="btn btn-primary btn-lg" onClick={() => add(p, n)}>Add to cart</button>
               <button type="button" className="btn btn-lg" onClick={() => { add(p, n); navigate('/cart'); }}>Buy now</button>
             </div>
-          ) : <p className="muted">Out of stock right now.{shop.phone ? <> Call <a href={`tel:${shop.phone}`}>{shop.phone}</a> to ask when it is back.</> : null}</p>}
+           ) : p.demo ? null : <p className="muted">Out of stock right now.{shop.phone ? <> Call <a href={`tel:${shop.phone}`}>{shop.phone}</a> to ask when it is back.</> : null}</p>}
           {p.description && <div className="card"><h3 style={{ marginBottom: 6 }}>About this product</h3><div className="desc">{p.description}</div></div>}
           <div className="assure">
             {shop.cod && <div><b>Cash on delivery</b>Pay when you receive it</div>}
