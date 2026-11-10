@@ -67,6 +67,12 @@ export function createHandler(env, db, auth, consoleData, upload) {
       case 'admin.store': return consoleData('snapshot');
       case 'admin.settings.save': return consoleData('settings_patch', cleanSettings(payload));
       case 'admin.footer.save': return consoleData('settings_patch', { footer: cleanFooter(payload) });
+      case 'admin.taxonomy.import': {
+        const { kind, rows } = payload;
+        if (!['group', 'category', 'brand'].includes(kind) || !Array.isArray(rows) || rows.length < 1 || rows.length > 500)
+          throw new Error('Import between 1 and 500 rows of the selected catalog type');
+        return consoleData('taxonomy_import', { kind, rows });
+      }
       case 'admin.taxonomy.save':
       case 'admin.taxonomy.delete': {
         const kind = payload.kind;

@@ -19,10 +19,11 @@ Deno.serve(createHandler(
   env,
   (action, payload) => supabaseData(url, key, action, payload),
   auth,
-  (action, payload = {}) => action === 'settings_patch'
-    ? rpc(url, key, 'geargrid_settings_patch', { p_patch: payload })
-    : action === 'product_save'
-      ? rpc(url, key, 'geargrid_product_details_save', { p_payload: payload })
-      : rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload }),
+  (action, payload = {}) => {
+    if (action === 'settings_patch') return rpc(url, key, 'geargrid_settings_patch', { p_patch: payload });
+    if (action === 'product_save') return rpc(url, key, 'geargrid_product_details_save', { p_payload: payload });
+    if (action === 'taxonomy_import') return rpc(url, key, 'geargrid_taxonomy_import', { p_kind: payload.kind, p_rows: payload.rows });
+    return rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload });
+  },
   (file) => uploadMedia(url, key, file),
 ));

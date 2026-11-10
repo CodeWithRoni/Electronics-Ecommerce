@@ -1,8 +1,9 @@
+import AdminTaxonomy from './AdminTaxonomy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
 import { useShop } from '../lib/store';
 import { money } from '../lib/format';
-import { ImageField, StoreSettings, Taxonomy } from './AdminStore';
+import { ImageField, StoreSettings } from './AdminStore';
 import AdminFooter from './AdminFooter';
 import AdminNavigation from './AdminNavigation';
 import { Customers, SalesReport } from './AdminInsights';
@@ -31,6 +32,13 @@ const paths = {
   gift: 'M4 10h16v11H4zM3 7h18v4H3zM12 7v14',
   reports: 'M4 3v17h16M8 17v-5m5 5V8m5 9V5',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  branches: 'M6 4h5v5H6zM14 15h5v5h-5zM6 15h5v5H6zM8.5 9v6m0-3h8v3',
+  tag: 'M3 12V4h8l9 9-8 8-9-9zM7 8h.01',
+  import: 'M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4',
+  export: 'M12 15V3M8 7l4-4 4 4M4 16v4h16v-4',
+  file: 'M6 3h8l4 4v14H6zM14 3v5h4M9 12h6m-6 4h6',
+  edit: 'M4 20h4L20 8l-4-4L4 16zM13 7l4 4',
+  trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7',
   external: 'M13 4h7v7m0-7-9 9m7 1v6H4V6h6',
 };
 
@@ -352,7 +360,7 @@ export default function Admin() {
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
     orders: 'Find customer orders and update their fulfillment status.',
-    taxonomy: 'Create, rename and remove groups, categories and brands.',
+    taxonomy: 'Manage categories, subcategories and brands or move them in bulk with Excel.',
     settings: 'Control header branding, homepage banner and inventory alerts.',
     footer: 'Manage support, navigation, contact details, app buttons and social links.',
     brands: 'Organize your catalog by brand or manufacturer.',
@@ -412,7 +420,14 @@ export default function Admin() {
         : tab === 'customers' || tab === 'segments' ? <Customers key={tab} orders={orders} segmented={tab === 'segments'} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
         <section className="console-panel"><h2>Store API</h2><p>Last successful data sync: {lastSync?.toLocaleString()}.</p></section>
       ) : tab === 'taxonomy' || tab === 'brands' ? (
-        <Taxonomy key={tab} initialKind={tab === 'brands' ? 'brand' : 'group'} groups={store.groups} brands={store.brands} busy={busy}
+        <AdminTaxonomy key={tab} brandOnly={tab === 'brands'} groups={store.groups} brands={store.brands} busy={busy} Icon={Icon}
+          importRows={(kind, rows, done) => run(async () => {
+            const { added, skipped } = await request(token, 'admin.taxonomy.import', { kind, rows });
+            await refresh();
+            await refreshShop();
+            done();
+            setNotice(`Excel import complete. ${added} added, ${skipped} already existed.`);
+          })}
           save={(entry, done) => changeStore('admin.taxonomy.save', entry, 'Catalog entry saved', done)}
           remove={(entry, done) => changeStore('admin.taxonomy.delete', entry, 'Catalog entry deleted', done)} />
       ) : tab === 'footer' ? (
