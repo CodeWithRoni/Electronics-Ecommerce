@@ -4,7 +4,7 @@ import { useShop } from './lib/store';
 import { brandName } from './lib/brand';
 import { Spinner } from './components/ui';
 import { shopDepartments } from './components/retail';
-import StoreHeader from './components/StoreHeader';
+import StoreHeader, { MobileShopNav } from './components/StoreHeader';
 import Home from './pages/Home';
 import PcBuilder from './pages/PcBuilder';
 import Account, { AccountCallback } from './pages/Account';
@@ -89,6 +89,7 @@ function Shell() {
         </div>
       </main>
       <StoreFooter settings={settings} shop={shop} />
+      <MobileShopNav />
       <div className="toasts" aria-live="polite">{toasts.map((t) => <div key={t.id} className={`toast ${t.kind === 'err' ? 'err' : ''}`}>{t.msg}</div>)}</div>
     </div>
   );

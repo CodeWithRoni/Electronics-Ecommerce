@@ -62,6 +62,7 @@ const icons = {
   ups: <><rect x="3" y="3" width="13" height="18" rx="2" /><path d="M7 7h5m-5 4h5m-5 6h.01M16 17h2a2 2 0 0 0 2-2v-3m-2-2v2h4v-2m-3 0V8m2 2V8" /></>,
   'home-solid': <path fill="currentColor" stroke="none" d="M2 11.5 12 3l10 8.5h-3v8h-5v-5h-4v5H5v-8z" />,
   home: <path d="m3 10 9-7 9 7M5 9v11h5v-6h4v6h5V9" />,
+  close: <path d="m6 6 12 12M18 6 6 18" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   gift: <><path d="M4 10h16v11H4zM3 7h18v4H3zM12 7v14" /><path d="M12 7C8 7 6 6 7 4s5 0 5 3Zm0 0c4 0 6-1 5-3s-5 0-5 3Z" /></>,
   user: <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 21v-2a7.5 7.5 0 0 1 15 0v2Z" /></>,

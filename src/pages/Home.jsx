@@ -50,6 +50,7 @@ export default function Home() {
         <div><RetailIcon name="truck" /><span><strong>Delivery options</strong><small>See rates at checkout</small></span></div>
         <div><RetailIcon name="wallet" /><span><strong>Payment options</strong><small>{payments.join(' · ') || 'See options at checkout'}</small></span></div>
         <Link to="/wishlist"><RetailIcon name="heart" /><span><strong>Your wishlist</strong><small>Save products for later</small></span></Link>
+        <Link className="retail-service-mobile" to="/pc-builder"><RetailIcon name="desktop" /><span><strong>PC Builder</strong><small>Build your own PC</small></span></Link>
       </section>
 
       {departments.length > 0 && <section className="retail-section" aria-labelledby="department-title">
