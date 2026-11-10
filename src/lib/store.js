@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { api } from './api';
-import { withDemoProducts } from './demoProducts';
 
 const CART = 'electronics_shop_cart', THEME = 'electronics_shop_theme', CATALOG = 'electronics_shop_catalog';
 const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
@@ -8,7 +7,7 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 const systemTheme = () => (globalThis.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
 
 export const useShop = create((set, get) => ({
-  catalog: read(CATALOG, null) ? withDemoProducts(read(CATALOG, null)) : null, // last catalogue: the page shows it at once, then refreshes
+  catalog: read(CATALOG, null), // last catalogue: the page shows it at once, then refreshes
   loading: false,
   error: '',
   cart: read(CART, []), // [{ product_id, qty }]
@@ -21,12 +20,8 @@ export const useShop = create((set, get) => ({
     try {
       const catalog = await api('shop.catalog');
       write(CATALOG, catalog);
-      set({ catalog: withDemoProducts(catalog), loading: false });
-    } catch (e) {
-      // Public demo catalog remains browsable without a configured backend.
-      const fallback = { shop: { name: 'Electronics E-commerce — Demo', open: true, currency: 'BDT', address: '', phone: '', email: '', notice: 'DEMO CATALOG — sample prices only; demo products cannot be ordered.', cod: false, bkash: { enabled: false }, delivery: { inside: 0, outside: 0, inside_label: 'Demo' } }, products: [], groups: [], brands: [] };
-      set({ catalog: withDemoProducts(read(CATALOG, null) || fallback), loading: false, error: e.message });
-    }
+      set({ catalog, loading: false });
+    } catch (e) { set({ loading: false, error: e.message }); }
   },
   product: (id) => get().catalog?.products.find((p) => p.id === id),
 
