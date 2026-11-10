@@ -59,7 +59,10 @@ export default function Home() {
         </div>
         <nav className="retail-departments" aria-label="Shop by category">
           {departments.map(({ name, to, icon }) => (
-            <Link key={to} to={to}><RetailIcon name={icon} size={29} /><span>{name}</span></Link>
+            <Link key={to} to={to}>
+              <span className="retail-department-icon"><RetailIcon name={icon} size={32} /></span>
+              <span>{name}</span>
+            </Link>
           ))}
         </nav>
       </section>}

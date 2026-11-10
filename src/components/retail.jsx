@@ -22,13 +22,19 @@ export function shopDepartments(groups = [], useFallback = true) {
   return [...catalogLinks, ...browseLinks];
 }
 
+const extraDepartmentIcons = {
+  camera: 'camera', gadget: 'device', gaming: 'gamepad', lifestyle: 'heart',
+  'office equipment': 'printer', power: 'bolt', security: 'shield', software: 'code',
+};
+
 function departmentIcon(name) {
-  const match = departments.find(([label]) => label.toLowerCase() === name.toLowerCase());
+  const normalized = name.trim().toLowerCase();
+  const match = departments.find(([label]) => label.toLowerCase() === normalized);
   if (match) return match[1];
   if (/router|wi-fi|network|switch/i.test(name)) return 'network';
   if (/ram|motherboard|processor|graphics|power supply|component/i.test(name)) return 'chip';
   if (/ssd|hdd|drive|memory/i.test(name)) return 'storage';
-  return 'box';
+  return Object.hasOwn(extraDepartmentIcons, normalized) ? extraDepartmentIcons[normalized] : 'box';
 }
 
 const icons = {
@@ -39,6 +45,9 @@ const icons = {
   network: <><rect x="2.5" y="12" width="19" height="8" rx="2" /><path d="M6 12V5m12 7V5M7 16h.01m4 0h.01m4 0h2" /></>,
   storage: <><rect x="5" y="3" width="14" height="18" rx="2" /><circle cx="12" cy="10" r="3" /><path d="M10 17h4m-2-7 3 4" /></>,
   keyboard: <><rect x="2.5" y="6" width="19" height="12" rx="2" /><path d="M6 10h.01m4 0h.01m4 0h.01m4 0h.01M6 14h.01m4 0h4m4 0h.01" /></>,
+  device: <><rect x="6" y="2.5" width="12" height="19" rx="2" /><path d="M11 18h2" /></>,
+  gamepad: <><path d="M7.5 7h9c2 0 3.3 1.3 3.7 3.2l1 4.8c.4 2-1.7 3.3-3.2 2l-2.5-2h-7L6 17c-1.5 1.3-3.6 0-3.2-2l1-4.8C4.2 8.3 5.5 7 7.5 7Z" /><path d="M7 11h4m-2-2v4m6-2h.01m2.5 1.5h.01" /></>,
+  code: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m9 9-3 3 3 3m6-6 3 3-3 3" /></>,
   camera: <><path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="3" /></>,
   printer: <><path d="M6 8V3h12v5M6 17H3V9h18v8h-3m-1-5h1" /><path d="M6 14h12v7H6z" /></>,
   box: <><path d="m12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Zm0 18v-9m-9-4.5 9 4.5 9-4.5M7.5 5.3l9 4.5" /></>,
