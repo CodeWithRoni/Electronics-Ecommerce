@@ -1,10 +1,11 @@
+import { RetailIcon } from '../components/retail';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { customerAuth, accountRedirect } from '../lib/customerAuth';
 import { footerSettings } from '../lib/footer';
 
-function Field({ label, name, type = 'text', ...props }) {
-  return <label className="account-field">{label}
+function Field({ label, name, type = 'text', showRequired = false, ...props }) {
+  return <label className="account-field"><span>{label}{showRequired && <span className="account-required" aria-hidden="true"> *</span>}</span>
     <input name={name} type={type} placeholder={label} required {...props} />
   </label>;
 }
@@ -93,7 +94,7 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
   }
 
   return <div className="account-page">
-    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>{signedIn ? 'Profile' : title}</span></nav>
+    <nav className="crumbs" aria-label="Breadcrumb"><Link to="/" aria-label="Home">{register ? <RetailIcon name="home" size={15} /> : 'Home'}</Link><span>/</span><Link to="/account/login">Account</Link><span>/</span><span>{signedIn ? 'Profile' : title}</span></nav>
     <section className="account-form" aria-labelledby="account-heading">
       <h1 id="account-heading">{title}</h1>
       {page === 'privacy' ? <>
@@ -121,11 +122,11 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
         <form onSubmit={submit}>
           {register && !details ? <>
             <div className="account-name-fields">
-              <Field label="First Name" name="first_name" autoComplete="given-name" maxLength={80} />
-              <Field label="Last Name" name="last_name" autoComplete="family-name" maxLength={80} />
+              <Field label="First Name" name="first_name" showRequired autoComplete="given-name" maxLength={80} />
+              <Field label="Last Name" name="last_name" showRequired autoComplete="family-name" maxLength={80} />
             </div>
-            <Field label="E-Mail" name="email" type="email" autoComplete="email" maxLength={254} />
-            <Field label="Telephone" name="phone" type="tel" autoComplete="tel" maxLength={24} />
+            <Field label="E-Mail" name="email" showRequired type="email" autoComplete="email" maxLength={254} />
+            <Field label="Telephone" name="phone" showRequired type="tel" autoComplete="tel" maxLength={24} />
             <div className="account-consent"><label><input type="checkbox" name="consent" required /> I have read and agree to the</label>{privacyLink ? <a href={privacyLink} target="_blank" rel="noreferrer">Privacy Policy</a> : <a href="#/account/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>}</div>
           </> : (register || reset) ? <>
             <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} maxLength={72} />
@@ -140,7 +141,7 @@ export default function Account({ page, shop, settings, theme, toggleTheme }) {
       {error && <p className="account-error" role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
       {!signedIn && page === 'login' && <><div className="account-divider">Don't have an account?</div><Link className="account-outline" to="/account/register">Create Your Account</Link></>}
-      {!signedIn && (register || forgot) && <><div className="account-divider">Already have an account?</div><p>Return to the <Link to="/account/login">login page</Link>.</p></>}
+      {!signedIn && (register || forgot) && <><div className="account-divider">Already have an account?</div><p>{register ? 'If you already have an account with us, Please login at the' : 'Return to the'} <Link to="/account/login">login page</Link>.</p></>}
     </section>
   </div>;
 }

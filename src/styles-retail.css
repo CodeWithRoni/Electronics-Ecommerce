@@ -46,8 +46,8 @@
 .retail-search button:hover { background: #a63018; }
 .retail-header-actions { display: flex; gap: 8px; }
 .retail-nav { background: var(--panel); border-bottom: 1px solid var(--line); }
-.retail-header .retail-nav .wrap { height: auto; padding-top: 0; padding-bottom: 0; display: flex; align-items: stretch; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
-.retail-nav a { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 12px 15px; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.retail-header .retail-nav .wrap { height: auto; padding-top: 0; padding-bottom: 0; display: flex; align-items: stretch; gap: 0; overflow: visible; }
+.retail-nav a { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 12px clamp(3px, calc(1.2vw - 6px), 8px); color: var(--text); text-decoration: none; font-size: clamp(11px, 1.17vw, 13px); font-weight: 800; white-space: nowrap; }
 .retail-nav a:hover { background: var(--panel-2); color: var(--aqua); }
 .retail-nav .retail-all { padding-left: 0; color: var(--aqua); }
 .retail-nav-track { margin-left: auto; }
@@ -122,8 +122,8 @@
   .retail-search input { font-size: 14px; }
   .retail-nav { display: none; }
   .retail-nav.menu-open { display: block; }
-  .retail-header .retail-nav .wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; max-height: 50vh; overflow-y: auto; }
-  .retail-nav a, .retail-nav .retail-all { padding: 10px 8px; min-height: 43px; border-bottom: 1px solid var(--line); white-space: normal; }
+  .retail-header .retail-nav .wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-height: 50vh; overflow-y: auto; }
+  .retail-nav a, .retail-nav .retail-all { padding: 10px 8px; min-height: 43px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: normal; }
   .retail-nav-track { margin-left: 0; }
   .retail-shell main { padding-top: 13px; }
   .retail-home { gap: 18px; }
@@ -242,8 +242,7 @@
   .retail-header-v2 .retail-top-cart { min-width: 37px; width: 37px; height: 40px; }
 }
 
-.retail-header .retail-nav .wrap { flex-wrap: wrap; overflow: visible; }
-.retail-header .retail-nav { position: relative; z-index: 5; }
+.retail-header .retail-nav { position: relative; z-index: 5; --nav-column-width: 200px; --nav-row-height: 28px; }
 .retail-nav-group, .retail-categories > li { position: relative; }
 .retail-nav-row { display: flex; align-items: stretch; }
 .retail-nav-row a { flex: 1; justify-content: space-between; }
@@ -252,9 +251,7 @@
   display: none;
   position: absolute;
   inset: 100% auto auto 0;
-  width: max-content;
-  min-width: 176px;
-  max-width: 225px;
+  width: var(--nav-column-width);
   list-style: none;
   margin: 0;
   padding: 4px 0;
@@ -262,28 +259,50 @@
   border: 1px solid var(--line);
   box-shadow: 0 12px 25px #10162924;
 }
-.retail-categories { border-top: 2px solid var(--aqua); }
+.retail-categories { border-top: 2px solid var(--aqua); width: calc(var(--nav-column-width) * var(--nav-columns) + 2px); }
 .retail-brands { inset: -5px auto auto 100%; }
 .retail-nav-group[data-align="end"] .retail-categories { left: auto; right: 0; }
-.retail-nav-group[data-align="end"] .retail-brands { left: auto; right: 100%; }
+.retail-categories[data-brands-left="true"] .retail-brands { left: auto; right: 100%; }
 .retail-categories a, .retail-brands a { display: flex; padding: 8px 12px; white-space: normal; overflow-wrap: anywhere; }
 @media (min-width: 721px) {
-  .retail-nav[data-dismissed="false"] .retail-nav-group:is(:hover, :focus-within) > .retail-categories,
+  .retail-nav-group, .retail-nav-row a { min-width: 0; }
+  .retail-nav-label { overflow: hidden; text-overflow: ellipsis; }
+  .retail-nav .retail-categories a, .retail-nav .retail-brands a {
+    height: var(--nav-row-height);
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .retail-nav[data-dismissed="false"] .retail-nav-group:is(:hover, :focus-within) > .retail-categories {
+    display: grid;
+    grid-template-columns: repeat(var(--nav-columns), var(--nav-column-width));
+    grid-template-rows: repeat(var(--nav-rows), var(--nav-row-height));
+    grid-auto-flow: column;
+    translate: var(--nav-shift, 0px);
+  }
+  .retail-nav[data-dismissed="false"] .retail-categories > li:is(:hover, :focus-within) { z-index: 1; }
+  .retail-nav[data-dismissed="false"] .retail-categories > li:is(:hover, :focus-within) > .retail-nav-row a {
+    background: var(--retail-accent);
+    color: #fff;
+  }
   .retail-nav[data-dismissed="false"] .retail-categories > li:is(:hover, :focus-within) > .retail-brands { display: block; }
 }
 @media (max-width: 720px) {
-  .retail-header .retail-nav .wrap { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
   .retail-nav-row button { display: block; min-width: 44px; border: 0; background: var(--panel-2); color: var(--text); cursor: pointer; }
-  .retail-categories, .retail-brands { position: static; width: auto; max-width: none; padding: 0 0 0 14px; box-shadow: none; border: 0; }
+  .retail-categories, .retail-brands { position: static; width: auto; padding: 0 0 0 14px; box-shadow: none; border: 0; }
   .retail-nav-group[data-open="true"] > .retail-categories, .retail-categories > li[data-open="true"] > .retail-brands { display: block; }
 }
 .retail-shell main:has(.account-page) { background: var(--panel); }
 .account-page { min-height: min(72vh, 715px); }
-.account-page .crumbs { flex-wrap: wrap; }
+.account-page .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.account-page .crumbs svg { display: block; }
 .account-form { max-width: 400px; margin: 54px auto 0; padding-bottom: 74px; }
 .account-form h1 { margin: 0 0 22px; font-size: 20px; }
 .account-form form { display: grid; gap: 18px; }
 .account-field { display: grid; gap: 6px; min-width: 0; font-size: 13px; font-weight: 700; }
+.account-required { color: #bd2626; }
+[data-theme="dark"] .account-required { color: #ff7777; }
 .account-field input { min-width: 0; width: 100%; border-radius: 4px; }
 .account-name-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .account-password { position: relative; }

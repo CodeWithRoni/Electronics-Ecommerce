@@ -8,6 +8,19 @@ function HeaderAction({ icon, title, caption }) {
   return <><RetailIcon name={icon} size={21} /><span><b>{title}</b><small>{caption}</small></span></>;
 }
 
+function fitDropdown(event) {
+  const menu = event.currentTarget.querySelector('.retail-categories');
+  if (!menu || getComputedStyle(menu).position !== 'absolute' || !menu.offsetWidth) return;
+
+  const { left, right } = menu.getBoundingClientRect();
+  const viewport = document.documentElement.clientWidth;
+  const previousShift = parseFloat(menu.style.getPropertyValue('--nav-shift')) || 0;
+  const shift = Math.max(8 - left + previousShift, Math.min(0, viewport - 8 - right + previousShift));
+  const columnWidth = menu.firstElementChild.offsetWidth;
+  menu.style.setProperty('--nav-shift', `${shift}px`);
+  menu.dataset.brandsLeft = right - previousShift + shift + columnWidth > viewport - 8;
+}
+
 export default function StoreHeader({ settings, name, departments, q, setQ, search, menuOpen, setMenuOpen, count, groups = [], brands = [], products = [] }) {
   const [expanded, setExpanded] = useState({});
   const [dismissed, setDismissed] = useState(false);
@@ -66,25 +79,27 @@ export default function StoreHeader({ settings, name, departments, q, setQ, sear
         <Link to="/products" className="retail-all"><RetailIcon name="menu" size={17} /> All products</Link>
         {departments.map(({ id, name, to }, index) => {
           const categories = groups.find((group) => group.id === id)?.categories || [];
-          return <div className="retail-nav-group" key={to} data-open={!!expanded[to]} data-align={index >= departments.length / 2 ? 'end' : 'start'}>
-            <div className="retail-nav-row"><Link to={to}>{name}</Link>
+          const menuItems = categories.length + 1;
+          const columns = menuItems > 16 ? 2 : 1;
+          return <div className="retail-nav-group" key={to} data-open={!!expanded[to]} data-align={index >= departments.length / 2 ? 'end' : 'start'} onPointerEnter={fitDropdown} onFocus={fitDropdown}>
+            <div className="retail-nav-row"><Link to={to}><span className="retail-nav-label" title={name}>{name}</span></Link>
               {categories.length > 0 && <button type="button" aria-label={`Categories in ${name}`} aria-expanded={!!expanded[to]} onClick={() => toggle(to)}>⌄</button>}
             </div>
-            {categories.length > 0 && <ul className="retail-categories">
+            {categories.length > 0 && <ul className="retail-categories" style={{ '--nav-columns': columns, '--nav-rows': Math.ceil(menuItems / columns) }}>
               {categories.map((category) => {
                 const url = `${to}&c=${encodeURIComponent(category.id)}`;
                 const ids = brandsByCategory.get(JSON.stringify([id, category.id]));
                 const matches = brands.filter((brand) => ids?.has(brand.id));
                 return <li key={category.id} data-open={!!expanded[url]}>
-                  <div className="retail-nav-row"><Link to={url}>{category.name}{matches.length > 0 && <span aria-hidden="true">›</span>}</Link>
+                  <div className="retail-nav-row"><Link to={url}><span className="retail-nav-label" title={category.name}>{category.name}</span>{matches.length > 0 && <span aria-hidden="true">›</span>}</Link>
                     {matches.length > 0 && <button type="button" aria-label={`Brands in ${category.name}`} aria-expanded={!!expanded[url]} onClick={() => toggle(url)}>⌄</button>}
                   </div>
                   {matches.length > 0 && <ul className="retail-brands">
-                    {matches.map((brand) => <li key={brand.id}><Link to={`${url}&b=${encodeURIComponent(brand.id)}`}>{brand.name}</Link></li>)}
+                    {matches.map((brand) => <li key={brand.id}><Link to={`${url}&b=${encodeURIComponent(brand.id)}`}><span className="retail-nav-label" title={brand.name}>{brand.name}</span></Link></li>)}
                   </ul>}
                 </li>;
               })}
-              <li><Link to={to}>Show all {name}</Link></li>
+              <li><Link to={to}><span className="retail-nav-label" title={`Show all ${name}`}>Show all {name}</span></Link></li>
             </ul>}
           </div>;
         })}

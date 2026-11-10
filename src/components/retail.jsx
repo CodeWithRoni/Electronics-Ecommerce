@@ -45,6 +45,7 @@ const icons = {
   truck: <><path d="M2 5h13v12H2zM15 9h4l3 4v4h-7" /><circle cx="6" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></>,
   wallet: <><rect x="2.5" y="5" width="19" height="14" rx="2" /><path d="M3 10h18M6 15h3" /></>,
   heart: <path d="M20.8 5.7a5 5 0 0 0-7.1 0L12 7.4l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21l8.8-8.2a5 5 0 0 0 0-7.1Z" />,
+  home: <path d="m3 10 9-7 9 7M5 9v11h5v-6h4v6h5V9" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   gift: <><path d="M4 10h16v11H4zM3 7h18v4H3zM12 7v14" /><path d="M12 7C8 7 6 6 7 4s5 0 5 3Zm0 0c4 0 6-1 5-3s-5 0-5 3Z" /></>,
   user: <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 21v-2a7.5 7.5 0 0 1 15 0v2Z" /></>,
