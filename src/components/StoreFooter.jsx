@@ -11,27 +11,27 @@ export default function StoreFooter({ settings, shop }) {
   ].filter(([label, url]) => label && url);
   const footerLogo = footer.logo || (footer.company === brandName ? brandLogo : '');
   const support = footer.phone || (footer.locator_url && footer.locator_title);
-  const contact = footer.logo || footer.company || footer.address || footer.email;
+  const contact = footerLogo || footer.company || footer.address || footer.email;
 
   return <footer className="store-footer">
     <div className="wrap store-footer-inner">
       <div className="store-footer-top">
-        {(support || footer.support_heading) && <section className="store-footer-support">
+        {support && <section className="store-footer-support">
           {footer.support_heading && <h2>{footer.support_heading}</h2>}
           {footer.phone && <a className="store-footer-card" href={`tel:${footer.phone.replace(/[^\d+]/g, '')}`}>
-            <RetailIcon name="phone" size={21} /><span>{footer.support_hours && <small>{footer.support_hours}</small>}<strong>{footer.phone}</strong></span>
+            <RetailIcon name="phone" size={21} /><span>{footer.support_hours && <small>{footer.support_hours}</small>}<strong className="store-footer-phone">{footer.phone}</strong></span>
           </a>}
           {footer.locator_url && footer.locator_title && <a className="store-footer-card" href={footer.locator_url}>
             <RetailIcon name="pin" size={21} /><span>{footer.locator_label && <small>{footer.locator_label}</small>}<strong>{footer.locator_title}</strong></span>
           </a>}
         </section>}
-        {(footer.links_heading || footer.links.length > 0) && <section>
+        {footer.links.length > 0 && <section>
           {footer.links_heading && <h2>{footer.links_heading}</h2>}
           <nav className="store-footer-links" aria-label={footer.links_heading || 'Footer navigation'}>
             {footer.links.map(({ label, url }, index) => <a key={index} href={url}>{label}</a>)}
           </nav>
         </section>}
-        {(contact || footer.contact_heading) && <section className="store-footer-contact">
+        {contact && <section className="store-footer-contact">
           {footer.contact_heading && <h2>{footer.contact_heading}</h2>}
           {footerLogo && <img className="retail-footer-logo" src={footerLogo} alt={footer.company || shop?.name || brandName} loading="lazy" />}
           {footer.company && (footer.logo || !footerLogo) && <strong>{footer.company}</strong>}
