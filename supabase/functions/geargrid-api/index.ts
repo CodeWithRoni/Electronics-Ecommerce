@@ -17,11 +17,18 @@ const env = Object.fromEntries(configNames.map((name) => [name, Deno.env.get(nam
 const auth = createAdminAuth(url, publicKey, key, (params) => rpc(url, key, 'geargrid_admin_lookup', params));
 Deno.serve(createHandler(
   env,
-  (action, payload) => supabaseData(url, key, action, payload),
+  (action, payload) => action === 'catalog' || action === 'admin_products'
+    ? rpc(url, key, 'geargrid_products_with_attributes', { p_active_only: action === 'catalog' })
+    : supabaseData(url, key, action, payload),
   auth,
   (action, payload = {}) => {
     if (action === 'settings_patch') return rpc(url, key, 'geargrid_settings_patch', { p_patch: payload });
     if (action === 'product_save') return rpc(url, key, 'geargrid_product_details_save', { p_payload: payload });
+    if (action.startsWith('attribute_')) return rpc(url, key, 'geargrid_attribute_manage', { p_action: action, p_payload: payload });
+    if (action === 'snapshot') return Promise.all([
+      rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload }),
+      rpc(url, key, 'geargrid_attributes', {}),
+    ]).then(([snapshot, attributes]) => ({ ...snapshot, attributes }));
     if (action === 'taxonomy_import') return rpc(url, key, 'geargrid_taxonomy_import', { p_kind: payload.kind, p_rows: payload.rows });
     return rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload });
   },

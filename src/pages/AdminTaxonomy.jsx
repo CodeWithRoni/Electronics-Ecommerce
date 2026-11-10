@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import AdminAttributes from './AdminAttributes';
 import { downloadTaxonomy, readTaxonomy } from '../lib/taxonomyExcel';
 
 const sections = {
@@ -118,7 +119,7 @@ function TaxonomyCard({ kind, items, groups, busy, save, remove, importRows, Ico
   </section>;
 }
 
-export default function AdminTaxonomy({ groups, brands, Icon, ...actions }) {
+export default function AdminTaxonomy({ groups, brands, attributes = [], Icon, changeAttribute, ...actions }) {
   const categories = groups.flatMap((group) => group.categories.map((category) => ({
     ...category, group_id: group.id, group_name: group.name,
   })));
@@ -127,12 +128,6 @@ export default function AdminTaxonomy({ groups, brands, Icon, ...actions }) {
   return <div className="taxonomy-grid">
     {Object.keys(sections).map((kind) =>
       <TaxonomyCard key={kind} kind={kind} items={lists[kind]} groups={groups} Icon={Icon} {...actions} />)}
-    <section className="console-panel taxonomy-card" aria-labelledby="taxonomy-attributes">
-      <header className="taxonomy-card-heading">
-        <div className="taxonomy-card-icon"><Icon name="settings" size={19} /></div>
-        <div className="taxonomy-card-title"><h2 id="taxonomy-attributes">Attributes &amp; Variants</h2><span>Planned</span></div>
-      </header>
-      <p className="taxonomy-card-description">Product options such as color, size and configuration.</p>
-    </section>
+    <AdminAttributes attributes={attributes} busy={actions.busy} Icon={Icon} changeAttribute={changeAttribute} />
   </div>;
 }

@@ -244,3 +244,18 @@
   .taxonomy-card-title h2 { font-size: 14px; }
   .taxonomy-file-actions { gap: 4px; }
 }
+
+.attribute-add { margin-bottom: 10px; }
+.taxonomy-list .attribute-entry { display: block; }
+.attribute-entry summary { cursor: pointer; }
+.attribute-entry summary small { display: inline; margin-inline-start: 4px; }
+.attribute-option-controls { display: flex; justify-content: space-between; gap: 6px; align-items: center; margin: 8px 0 4px; }
+.attribute-option-list { padding-inline-start: 12px; }
+.attribute-option-list li { padding-block: 5px; }
+.product-attributes { min-width: 0; display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.product-attributes legend { font-weight: 700; }
+.product-attributes p { margin: 0; font-size: 13px; color: #526077; }
+.product-attribute-group { display: grid; gap: 6px; }
+.product-attribute-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.product-attribute-options label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; cursor: pointer; }
+.product-attribute-options input { width: 15px; height: 15px; min-height: 0; margin: 0; }

@@ -24,13 +24,13 @@ export function createHandler(env, db, auth, consoleData, upload) {
   const fail = (error, status = 400) => reply({ ok: false, error }, status);
 
   async function catalog() {
-    const [results, { settings, groups, brands }] = await Promise.all([db('catalog'), consoleData('snapshot')]);
+    const [results, { settings, groups, brands, attributes = [] }] = await Promise.all([db('catalog'), consoleData('snapshot')]);
     const threshold = settings.low_stock_threshold ?? 5;
     const products = results.map((p) => ({
       ...p, price: Number(p.price), in_stock: p.stock > 0, low_stock: p.stock <= threshold,
       images: p.image ? [p.image] : [],
     }));
-    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, settings };
+    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, attributes, settings };
   }
 
   function createOrder(payload) {
@@ -64,6 +64,10 @@ export function createHandler(env, db, auth, consoleData, upload) {
 
   function admin(action, payload) {
     switch (action) {
+      case 'admin.attribute.save': return consoleData('attribute_save', payload);
+      case 'admin.attribute.delete': return consoleData('attribute_delete', payload);
+      case 'admin.attribute.value.save': return consoleData('attribute_value_save', payload);
+      case 'admin.attribute.value.delete': return consoleData('attribute_value_delete', payload);
       case 'admin.store': return consoleData('snapshot');
       case 'admin.settings.save': return consoleData('settings_patch', cleanSettings(payload));
       case 'admin.footer.save': return consoleData('settings_patch', { footer: cleanFooter(payload) });
@@ -121,6 +125,14 @@ export function createHandler(env, db, auth, consoleData, upload) {
             || (socket && !/^[A-Z0-9 -]{2,20}$/.test(socket)) || !['', 'DDR3', 'DDR4', 'DDR5'].includes(memory))
             throw new Error('Choose valid PC Builder specifications');
           details.pc_specs = { slot, socket, memory, ...(watts !== null ? { watts } : {}) };
+        }
+        if (Object.hasOwn(p, 'attribute_value_ids')) {
+          const values = p.attribute_value_ids;
+          if (!Array.isArray(values) || values.length > 200 || values.some((id) =>
+            typeof id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id))) {
+            throw new Error('Choose valid product attribute options');
+          }
+          details.attribute_value_ids = [...new Set(values)];
         }
         return consoleData('product_save', {
           id: p.id, name: p.name, sku: p.sku || '', description: p.description || '', price, stock,

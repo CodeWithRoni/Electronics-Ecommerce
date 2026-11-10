@@ -1,4 +1,5 @@
 import AdminTaxonomy from './AdminTaxonomy';
+import { ProductAttributes } from './AdminAttributes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
 import { useShop } from '../lib/store';
@@ -92,7 +93,7 @@ function Status({ value, label }) {
   return <span className={`console-status console-status-${value}`}>{label || statuses[value] || value}</span>;
 }
 
-function ProductEditor({ product, groups, brands, upload, existing, busy, error, onChange, onClose, onSave }) {
+function ProductEditor({ product, groups, brands, attributes = [], upload, existing, busy, error, onChange, onClose, onSave }) {
   const dialog = useRef(null);
   const title = existing ? 'Edit product' : 'Add product';
   const categories = groups.find(({ id }) => id === product.group_id)?.categories || [];
@@ -131,6 +132,7 @@ function ProductEditor({ product, groups, brands, upload, existing, busy, error,
       <label className="field"><span>Regular price before discount (BDT)</span>
         <input type="number" min="0.01" step="0.01" value={product.compare_at_price ?? ''} onChange={(event) => onChange('compare_at_price', event.target.value)} />
       </label>
+      <ProductAttributes attributes={attributes} selected={product.attribute_value_ids || []} busy={busy} change={(ids) => onChange('attribute_value_ids', ids)} />
       <fieldset className="console-wide console-builder-fields">
         <legend>PC Builder</legend>
         <label className="field"><span>Component type</span>
@@ -419,7 +421,8 @@ export default function Admin() {
         : tab === 'customers' || tab === 'segments' ? <Customers key={tab} orders={orders} segmented={tab === 'segments'} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
         <section className="console-panel"><h2>Store API</h2><p>Last successful data sync: {lastSync?.toLocaleString()}.</p></section>
       ) : tab === 'taxonomy' ? (
-        <AdminTaxonomy groups={store.groups} brands={store.brands} busy={busy} Icon={Icon}
+        <AdminTaxonomy groups={store.groups} brands={store.brands} attributes={store.attributes} busy={busy} Icon={Icon}
+          changeAttribute={(action, entry, done) => changeStore(`admin.attribute.${action}`, entry, 'Attribute options updated', done)}
           importRows={(kind, rows, done) => run(async () => {
             const { added, skipped } = await request(token, 'admin.taxonomy.import', { kind, rows });
             await refresh();
@@ -465,7 +468,7 @@ export default function Admin() {
       )}
     </main>
 
-    {editor && <ProductEditor product={editor.product} groups={store.groups} brands={store.brands} upload={upload} existing={editor.existing} busy={busy} error={error}
+    {editor && <ProductEditor product={editor.product} groups={store.groups} brands={store.brands} attributes={store.attributes} upload={upload} existing={editor.existing} busy={busy} error={error}
       onChange={(key, value) => setEditor((current) => ({ ...current, product: { ...current.product, ...(key === 'group_id' ? { category_id: '' } : {}), [key]: value } }))}
       onClose={() => { setEditor(null); setError(''); }} onSave={save} />}
   </div>;
