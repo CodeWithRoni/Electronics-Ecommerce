@@ -120,11 +120,6 @@
   .retail-header-actions .icon-btn, .retail-header .mobile-menu-toggle { width: 37px; height: 42px; min-width: 37px; }
   .retail-search { order: 4; flex-basis: 100%; margin-top: 3px; }
   .retail-search input { font-size: 14px; }
-  .retail-nav { display: none; }
-  .retail-nav.menu-open { display: block; }
-  .retail-header .retail-nav .wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-height: 50vh; overflow-y: auto; }
-  .retail-nav a, .retail-nav .retail-all { padding: 10px 8px; min-height: 43px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: normal; }
-  .retail-nav-track { margin-left: 0; }
   .retail-shell main { padding-top: 13px; }
   .retail-home { gap: 18px; }
   .retail-hero { min-height: 263px; }
@@ -264,7 +259,7 @@
 .retail-nav-group[data-align="end"] .retail-categories { left: auto; right: 0; }
 .retail-categories[data-brands-left="true"] .retail-brands { left: auto; right: 100%; }
 .retail-categories a, .retail-brands a { display: flex; padding: 8px 12px; white-space: normal; overflow-wrap: anywhere; }
-@media (min-width: 721px) {
+@media (min-width: 901px) {
   .retail-nav-group, .retail-nav-row a { min-width: 0; }
   .retail-nav-label { overflow: hidden; text-overflow: ellipsis; }
   .retail-nav .retail-categories a, .retail-nav .retail-brands a {
@@ -288,7 +283,13 @@
   }
   .retail-nav[data-dismissed="false"] .retail-categories > li:is(:hover, :focus-within) > .retail-brands { display: block; }
 }
-@media (max-width: 720px) {
+@media (max-width: 900px) {
+  .retail-header .mobile-menu-toggle { display: inline-grid; place-items: center; flex: none; }
+  .retail-nav { display: none; }
+  .retail-nav.menu-open { display: block; }
+  .retail-header .retail-nav .wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-height: 50vh; overflow-y: auto; }
+  .retail-nav a, .retail-nav .retail-all { padding: 10px 8px; min-height: 43px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: normal; }
+  .retail-nav-track { margin-left: 0; }
   .retail-nav-row button { display: block; min-width: 44px; border: 0; background: var(--panel-2); color: var(--text); cursor: pointer; }
   .retail-categories, .retail-brands { position: static; width: auto; padding: 0 0 0 14px; box-shadow: none; border: 0; }
   .retail-nav-group[data-open="true"] > .retail-categories, .retail-categories > li[data-open="true"] > .retail-brands { display: block; }
