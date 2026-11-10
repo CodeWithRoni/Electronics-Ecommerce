@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { RetailIcon } from './retail';
+import { brandIcon, brandLogo, brandName } from '../lib/brand';
 import { CartIcon, SearchIcon, ThemeIcon } from './ui';
 
 function HeaderAction({ icon, title, caption }) {
@@ -10,7 +11,7 @@ function HeaderAction({ icon, title, caption }) {
 export default function StoreHeader({ settings, name, departments, q, setQ, search, menuOpen, setMenuOpen, count, favoriteCount, theme, toggleTheme }) {
   const account = useRef(null);
   const closeAccount = () => { if (account.current) account.current.open = false; };
-  const logo = settings.header_logo || (name === 'GearGrid' ? `${import.meta.env.BASE_URL}geargrid-logo-dark.svg` : '');
+  const logo = settings.header_logo || (name === brandName ? brandLogo : '');
   return <header className="top retail-header retail-header-v2" onKeyDown={(event) => {
     if (event.key !== 'Escape') return;
     if (account.current?.open) {
@@ -27,7 +28,7 @@ export default function StoreHeader({ settings, name, departments, q, setQ, sear
       </button>
       <Link to="/" className="brand retail-brand" aria-label={`${name} home`} onClick={closeAccount}>
         {logo ? <img className="retail-header-logo" src={logo} alt="" /> : <>
-          <span className="retail-brand-mark"><RetailIcon name="bolt" size={24} /></span>
+          <img className="retail-brand-mark" src={brandIcon} alt="" width="42" height="42" />
           <span className="retail-brand-name">{name}</span>
         </>}
       </Link>

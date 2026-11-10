@@ -21,11 +21,10 @@
 }
 
 .admin-standalone .btn { min-height: 42px; }
-.console-brand { display: flex; align-items: center; gap: 10px; min-width: 0; color: #fff; }
-.console-mark, .console-icon { display: grid; place-items: center; flex: none; width: 43px; height: 43px; border-radius: 10px; }
-.console-mark { background: #d94f31; color: white; }
-.console-brand strong, .console-brand small { display: block; }
-.console-brand strong { font-size: 15px; line-height: 1.2; }
+.console-brand { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; color: #fff; }
+.console-icon { display: grid; place-items: center; flex: none; width: 43px; height: 43px; border-radius: 10px; }
+.console-brand-logo { width: min(142px, 100%); height: auto; aspect-ratio: 3.75; object-fit: contain; object-position: left center; }
+.console-login-icon { display: block; border-radius: 13px; }
 .console-brand small { margin-top: 4px; color: #b9c7e1; font-size: 9px; font-weight: 800; letter-spacing: .16em; }
 .console-kicker { display: block; margin-bottom: 6px; color: var(--console-orange); font-size: 10px; font-weight: 800; letter-spacing: .15em; }
 .console-icon { background: #fff0e8; color: var(--console-orange); }

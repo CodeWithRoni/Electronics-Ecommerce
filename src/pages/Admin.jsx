@@ -7,6 +7,7 @@ import AdminFooter from './AdminFooter';
 import AdminNavigation from './AdminNavigation';
 import { Customers, SalesReport } from './AdminInsights';
 import { pcSlots } from '../lib/pcBuilder';
+import { brandIcon, brandLogo, brandName } from '../lib/brand';
 
 const emptyProduct = { id: '', name: '', sku: '', description: '', price: 0, stock: 0, group_id: '', category_id: '', brand_id: '', image: '', unit: 'pcs', active: true };
 const statuses = { new: 'New', confirmed: 'Confirmed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
@@ -16,7 +17,6 @@ const productFields = [
   ['stock', 'Stock quantity', true, 'number'],
 ];
 const paths = {
-  bolt: 'm13 2-9 12h7l-1 8 10-12h-7l1-8Z',
   dashboard: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   box: 'm12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Zm0 18v-9m-9-4.5 9 4.5 9-4.5M7.5 5.3l9 4.5',
   stock: 'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6',
@@ -74,8 +74,8 @@ function dashboardData(token) {
 
 function Brand() {
   return <div className="console-brand">
-    <span className="console-mark"><Icon name="bolt" size={23} /></span>
-    <div><strong>GearGrid</strong><small>STORE ADMIN</small></div>
+    <img className="console-brand-logo" src={brandLogo} alt={brandName} width="142" height="38" />
+    <small>STORE ADMIN</small>
   </div>;
 }
 
@@ -158,6 +158,9 @@ export default function Admin() {
   const [restoring, setRestoring] = useState(Boolean(token));
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [ready, setReady] = useState(false);
+  useEffect(() => {
+    document.title = ready ? 'GearGrid | Admin Dashboard' : 'GearGrid | Admin Login';
+  }, [ready]);
   const [tab, setTab] = useState('overview');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -300,7 +303,7 @@ export default function Admin() {
         <p>Update your catalog, check inventory and follow customer orders from one workspace.</p>
       </div>
       <section className="console-login" aria-labelledby="login-heading">
-        <div className="console-icon"><Icon name="lock" size={23} /></div>
+        <img className="console-login-icon" src={brandIcon} alt="" width="56" height="56" />
         <h1 id="login-heading">Store administration</h1>
         {restoring ? <p role="status">Restoring your session…</p> : <>
         <p>Sign in with your GearGrid admin username or email and password.</p>

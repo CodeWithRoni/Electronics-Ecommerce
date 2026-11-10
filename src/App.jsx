@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useShop } from './lib/store';
+import { brandName } from './lib/brand';
 import { Spinner } from './components/ui';
 import { shopDepartments } from './components/retail';
 import StoreHeader from './components/StoreHeader';
@@ -55,7 +56,7 @@ function Shell() {
   }, [settings.favicon]);
 
   const shop = catalog?.shop;
-  const shopName = shop?.name || 'GearGrid';
+  const shopName = shop?.name || brandName;
   const departments = shopDepartments(catalog?.groups, !catalog?.settings);
   const count = cart.reduce((n, l) => n + (Number.isInteger(l.qty) ? l.qty : 1), 0);
   const search = (e) => { e.preventDefault(); navigate(`/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''}`); };

@@ -38,7 +38,7 @@
 .retail-utility a { color: #fff; text-decoration: none; }
 .retail-header > .wrap { gap: 24px; height: 74px; }
 .retail-brand { flex: 0 1 245px; }
-.retail-brand-mark { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 9px; background: #d94f31; color: white; }
+.retail-brand-mark { display: block; flex: none; width: 42px; height: 42px; }
 .retail-brand-name { overflow-wrap: anywhere; color: white; font-size: 20px; font-weight: 800; line-height: 1.13; letter-spacing: -.035em; }
 .retail-search { display: flex; flex: 1; min-width: 0; border-radius: 8px; background: white; padding: 3px; color-scheme: light; }
 .retail-search input { min-width: 0; min-height: 40px; padding: 6px 12px; border: none; background: white; color: #18243a; }
@@ -115,7 +115,6 @@
   .retail-header > .wrap { height: auto; gap: 7px; }
   .retail-brand { flex: 1 1 0; gap: 6px; }
   .retail-brand-mark { width: 32px; height: 32px; }
-  .retail-brand-mark svg { width: 19px; }
   .retail-brand-name { font-size: 14px; }
   .retail-header-actions { gap: 5px; }
   .retail-header-actions .icon-btn, .retail-header .mobile-menu-toggle { width: 37px; height: 42px; min-width: 37px; }

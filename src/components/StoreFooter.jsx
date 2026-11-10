@@ -1,5 +1,6 @@
 import { footerSettings, footerSocials } from '../lib/footer';
 import { RetailIcon } from './retail';
+import { brandLogo, brandName } from '../lib/brand';
 
 export default function StoreFooter({ settings, shop }) {
   const footer = footerSettings(settings, shop);
@@ -8,6 +9,7 @@ export default function StoreFooter({ settings, shop }) {
     [footer.play_label, footer.play_url, 'playstore'],
     [footer.app_store_label, footer.app_store_url, 'appstore'],
   ].filter(([label, url]) => label && url);
+  const footerLogo = footer.logo || (footer.company === brandName ? brandLogo : '');
   const support = footer.phone || (footer.locator_url && footer.locator_title);
   const contact = footer.logo || footer.company || footer.address || footer.email;
 
@@ -31,8 +33,8 @@ export default function StoreFooter({ settings, shop }) {
         </section>}
         {(contact || footer.contact_heading) && <section className="store-footer-contact">
           {footer.contact_heading && <h2>{footer.contact_heading}</h2>}
-          {footer.logo && <img className="retail-footer-logo" src={footer.logo} alt={footer.company || shop?.name || 'GearGrid'} loading="lazy" />}
-          {footer.company && <strong>{footer.company}</strong>}
+          {footerLogo && <img className="retail-footer-logo" src={footerLogo} alt={footer.company || shop?.name || brandName} loading="lazy" />}
+          {footer.company && (footer.logo || !footerLogo) && <strong>{footer.company}</strong>}
           {footer.address && <address>{footer.address}</address>}
           {footer.email && <p>{footer.email_label && <b>{footer.email_label}</b>}<a href={`mailto:${footer.email}`}>{footer.email}</a></p>}
         </section>}
