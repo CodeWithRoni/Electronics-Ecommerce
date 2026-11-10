@@ -55,3 +55,24 @@ body{background:var(--rack)}.wrap{max-width:1320px}.top{background:#101827;color
  .top .brand b{font-size:17px}
  .top .wrap{gap:9px}
 }
+
+/* Retail navigation refresh — independent storefront identity */
+.top .search{display:flex;align-items:center;gap:0;background:#fff;border-radius:8px;padding:4px 4px 4px 12px;min-width:0;flex:1}
+.top .search input{flex:1;min-width:0;box-shadow:none!important;border:0!important;min-height:39px;padding:8px 10px}
+.header-search-submit{background:#ef4a23;color:#fff;border:0;border-radius:6px;min-height:40px;padding:0 18px;font-weight:800;cursor:pointer;flex:none}
+.header-search-submit:hover{background:#d83d18}
+.category-nav .wrap{gap:0;justify-content:space-between}
+.category-nav a{padding:14px 12px;transition:background .15s,color .15s}
+.category-nav a:hover{background:#fff1ec}
+.category-tile{align-items:center;text-align:center;justify-content:center;min-height:145px}
+.category-tile>span{font-size:36px;line-height:1.2}
+.category-tile b{font-size:14px}
+.section-head{margin-bottom:18px}
+@media(max-width:720px){
+ .top .search{order:5;flex-basis:100%;width:100%;margin-bottom:8px}
+ .top .wrap{flex-wrap:wrap}
+ .header-search-submit{padding:0 12px}
+ .category-nav.menu-open .wrap{align-items:stretch}
+ .category-nav.menu-open a{padding:12px 8px}
+ .category-tile{min-height:126px}
+}
