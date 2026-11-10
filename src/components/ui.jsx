@@ -26,6 +26,7 @@ export function Photo({ product, id, width = 500, alt }) {
 }
 
 export function StockBadge({ p }) {
+  if (p.demo) return <span className="badge badge-info">Demo only</span>;
   if (!p.in_stock) return <span className="badge badge-bad">Out of stock</span>;
   if (p.low_stock) return <span className="badge badge-warn">Few left</span>;
   return <span className="badge badge-ok">In stock</span>;
@@ -41,14 +42,14 @@ export function ProductCard({ p, brand, currency }) {
       <Link to={`/p/${p.id}`} aria-label={p.name}>
         <Photo product={p} width={400} />
         <div className="pcard-body">
-          {brand && <span className="pcard-brand">{brand}</span>}
+          {brand && <span className="pcard-brand">{brand}</span>}{p.demo && <span className="demo-tag">SAMPLE PRODUCT</span>}
           <span className="pcard-name">{p.name}</span>
           <span className="price">{money(p.price, currency)}{p.decimal ? <small className="muted"> / {p.unit}</small> : null}</span>
         </div>
       </Link>
       <div className="pcard-foot">
         <StockBadge p={p} />
-        <button type="button" className="btn btn-primary" disabled={!p.in_stock} onClick={() => add(p, 1)} aria-label={`Add ${p.name} to cart`}>Add to cart</button>
+        <button type="button" className="btn btn-primary" disabled={!p.in_stock || p.demo} onClick={() => add(p, 1)} aria-label={`Add ${p.name} to cart`}>{p.demo ? "Preview only" : "Add to cart"}</button>
       </div>
     </article>
   );
