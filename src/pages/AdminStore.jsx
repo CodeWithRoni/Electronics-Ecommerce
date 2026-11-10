@@ -88,7 +88,6 @@ export function StoreSettings({ initial, save, upload, busy }) {
         {field('shop_name', 'Store name', { maxLength: 80, placeholder: 'GearGrid' })}
         {field('low_stock_threshold', 'Low stock alert threshold', { type: 'number', min: 0, max: 100000, required: true })}
         {media('header_logo', 'Header logo')}
-        {media('footer_logo', 'Footer logo')}
         {media('favicon', 'Browser tab icon (favicon)')}
       </div>
     </section>
@@ -100,15 +99,6 @@ export function StoreSettings({ initial, save, upload, busy }) {
         {field('banner_text', 'Description', { maxLength: 250 })}
         {field('banner_button', 'Button label', { maxLength: 40 })}
         {field('banner_link', 'Button destination', { placeholder: '#/products or https://…' })}
-      </div>
-    </section>
-    <section className="console-panel">
-      <div className="console-panel-heading"><div><h2>Footer social links</h2><p>Leave a link empty to hide its icon on the storefront.</p></div></div>
-      <div className="console-settings-grid">
-        {field('facebook', 'Facebook', { type: 'url', placeholder: 'https://www.facebook.com/…' })}
-        {field('whatsapp', 'WhatsApp', { type: 'url', placeholder: 'https://wa.me/880…' })}
-        {field('instagram', 'Instagram', { type: 'url', placeholder: 'https://www.instagram.com/…' })}
-        {field('youtube', 'YouTube', { type: 'url', placeholder: 'https://www.youtube.com/…' })}
       </div>
     </section>
     <div className="console-settings-actions">

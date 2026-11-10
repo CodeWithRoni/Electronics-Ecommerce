@@ -1,4 +1,4 @@
-import { cleanSettings, httpsUrl } from './settings.js';
+import { cleanFooter, cleanSettings, httpsUrl } from './settings.js';
 
 const phoneNorm = (value) => String(value || '').replace(/\D/g, '').replace(/^880/, '0');
 
@@ -62,7 +62,8 @@ export function createHandler(env, db, auth, consoleData, upload) {
   function admin(action, payload) {
     switch (action) {
       case 'admin.store': return consoleData('snapshot');
-      case 'admin.settings.save': return consoleData('settings_save', cleanSettings(payload));
+      case 'admin.settings.save': return consoleData('settings_patch', cleanSettings(payload));
+      case 'admin.footer.save': return consoleData('settings_patch', { footer: cleanFooter(payload) });
       case 'admin.taxonomy.save':
       case 'admin.taxonomy.delete': {
         const kind = payload.kind;

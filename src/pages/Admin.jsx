@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../config';
 import { useShop } from '../lib/store';
 import { money } from '../lib/format';
 import { ImageField, StoreSettings, Taxonomy } from './AdminStore';
+import AdminFooter from './AdminFooter';
 
 const emptyProduct = { id: '', name: '', sku: '', description: '', price: 0, stock: 0, group_id: '', category_id: '', brand_id: '', image: '', unit: 'pcs', active: true };
 const statuses = { new: 'New', confirmed: 'Confirmed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
@@ -12,6 +13,7 @@ const sections = [
   ['orders', 'Customer orders', 'orders'],
   ['taxonomy', 'Catalog structure', 'stock'],
   ['settings', 'Storefront settings', 'settings'],
+  ['footer', 'Footer Settings', 'footer'],
 ];
 const productFields = [
   ['id', 'Product ID', true], ['sku', 'Model / SKU'],
@@ -28,6 +30,7 @@ const paths = {
   refresh: 'M20 7v5h-5M4 17v-5h5m-4-1a7 7 0 0 1 12-5l3 4M4 14l3 4a7 7 0 0 0 12-5',
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5zM12 15v2',
   settings: 'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6',
+  footer: 'M3 4h18v16H3zM3 14h18M8 17h8',
   external: 'M13 4h7v7m0-7-9 9m7 1v6H4V6h6',
 };
 
@@ -50,6 +53,24 @@ async function request(token, action, payload = {}) {
     throw error;
   }
   return data.data;
+}
+
+const sessionKey = `geargrid_admin_session:${API_URL}`;
+function savedSession() {
+  try { return sessionStorage.getItem(sessionKey) || ''; }
+  catch { return ''; }
+}
+function saveSession(token) {
+  try {
+    if (token) sessionStorage.setItem(sessionKey, token);
+    else sessionStorage.removeItem(sessionKey);
+  } catch { /* Admin access still works in memory if storage is unavailable. */ }
+}
+
+function dashboardData(token) {
+  return Promise.all([
+    request(token, 'admin.products'), request(token, 'admin.orders'), request(token, 'admin.store'),
+  ]);
 }
 
 function Brand() {
@@ -114,7 +135,9 @@ function ProductEditor({ product, groups, brands, upload, existing, busy, error,
 export default function Admin() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(savedSession);
+  const [restoring, setRestoring] = useState(Boolean(token));
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState('overview');
   const [products, setProducts] = useState([]);
@@ -128,16 +151,37 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const refreshShop = useShop((state) => state.load);
+  const shop = useShop((state) => state.catalog?.shop);
 
-  const refresh = async (sessionToken = token) => {
-    const [nextProducts, nextOrders, nextStore] = await Promise.all([
-      request(sessionToken, 'admin.products'), request(sessionToken, 'admin.orders'), request(sessionToken, 'admin.store'),
-    ]);
+  const applyDashboard = useCallback(([nextProducts, nextOrders, nextStore]) => {
     setProducts(nextProducts);
     setOrders(nextOrders);
     setStore(nextStore);
     setReady(true);
-  };
+  }, []);
+  const refresh = async (sessionToken = token) => applyDashboard(await dashboardData(sessionToken));
+
+  useEffect(() => {
+    if (!token || ready) return;
+    let active = true;
+    dashboardData(token).then((data) => {
+      if (!active) return;
+      setRestoring(false);
+      applyDashboard(data);
+    }).catch((failure) => {
+      if (!active) return;
+      setRestoring(false);
+      if (failure.status === 401) {
+        saveSession('');
+        setToken('');
+        setError('Your session has expired. Sign in again.');
+      } else {
+        setError('Could not restore your session. Try again.');
+      }
+    });
+    return () => { active = false; };
+  }, [token, ready, restoreAttempt, applyDashboard]);
+
   const run = async (action) => {
     setBusy(true);
     setError('');
@@ -157,6 +201,7 @@ export default function Admin() {
     return run(async () => {
       const session = await request('', 'admin.sign_in', credentials);
       await refresh(session.access_token);
+      saveSession(session.access_token);
       setToken(session.access_token);
     });
   };
@@ -206,7 +251,9 @@ export default function Admin() {
     setNotice('');
   };
   const lock = () => {
+    saveSession('');
     setToken('');
+    setRestoring(false);
     setPassword('');
     setReady(false);
     setProducts([]);
@@ -234,6 +281,7 @@ export default function Admin() {
       <section className="console-login" aria-labelledby="login-heading">
         <div className="console-icon"><Icon name="lock" size={23} /></div>
         <h1 id="login-heading">Store administration</h1>
+        {restoring ? <p role="status">Restoring your session…</p> : <>
         <p>Sign in with your GearGrid admin username or email and password.</p>
         <form onSubmit={(event) => { event.preventDefault(); signIn(); }}>
           <label className="field"><span>Username or email</span><input name="username" value={login} onChange={(event) => setLogin(event.target.value)} required autoComplete="username" autoCapitalize="none" spellCheck={false} /></label>
@@ -241,6 +289,12 @@ export default function Admin() {
           <button className="btn btn-primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         </form>
         {error && <p className="console-alert" role="alert">{error}</p>}
+        {token && <button className="btn" type="button" disabled={busy} onClick={() => {
+          setError('');
+          setRestoring(true);
+          setRestoreAttempt((attempt) => attempt + 1);
+        }}>Retry session</button>}
+        </>}
       </section>
     </main>
   </div>;
@@ -259,13 +313,14 @@ export default function Admin() {
   const revenue = orders.filter((order) => order.status === 'delivered').reduce((sum, order) => sum + Number(order.total || 0), 0);
   const lowStock = products.filter((product) => Number(product.stock) <= threshold);
   const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
-  const heading = { overview: 'Dashboard overview', products: 'Products & inventory', orders: 'Customer orders', taxonomy: 'Catalog structure', settings: 'Storefront settings' };
+  const heading = { overview: 'Dashboard overview', products: 'Products & inventory', orders: 'Customer orders', taxonomy: 'Catalog structure', settings: 'Storefront settings', footer: 'Footer Settings' };
   const description = {
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
     orders: 'Find customer orders and update their fulfillment status.',
     taxonomy: 'Create, rename and remove groups, categories and brands.',
-    settings: 'Control store branding, homepage banner, social links and alerts.',
+    settings: 'Control header branding, homepage banner and inventory alerts.',
+    footer: 'Manage support, navigation, contact details, app buttons and social links.',
   };
 
   return <div className="console-shell">
@@ -314,6 +369,9 @@ export default function Admin() {
         <Taxonomy groups={store.groups} brands={store.brands} busy={busy}
           save={(entry, done) => changeStore('admin.taxonomy.save', entry, 'Catalog entry saved', done)}
           remove={(entry, done) => changeStore('admin.taxonomy.delete', entry, 'Catalog entry deleted', done)} />
+      ) : tab === 'footer' ? (
+        <AdminFooter settings={store.settings} shop={shop} busy={busy} upload={upload}
+          save={(draft) => changeStore('admin.footer.save', draft, 'Footer settings saved')} />
       ) : tab === 'settings' ? (
         <StoreSettings initial={store.settings} busy={busy} upload={upload}
           save={(draft) => changeStore('admin.settings.save', draft, 'Storefront settings saved')} />

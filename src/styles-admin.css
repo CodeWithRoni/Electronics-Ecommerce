@@ -162,3 +162,9 @@
 .console-upload:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 820px) { .console-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .console-settings-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.console-footer-links { display: grid; gap: 10px; margin: 12px 0; }
+.console-footer-link { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 10px; align-items: end; }
+@media (max-width: 680px) {
+  .console-footer-link { grid-template-columns: minmax(0, 1fr); padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+}

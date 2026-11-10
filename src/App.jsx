@@ -4,6 +4,7 @@ import { useShop } from './lib/store';
 import { SearchIcon, CartIcon, ThemeIcon, Spinner } from './components/ui';
 import { RetailIcon, shopDepartments } from './components/retail';
 import Home from './pages/Home';
+import StoreFooter from './components/StoreFooter';
 import Products from './pages/Products';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
@@ -120,23 +121,7 @@ function Shell() {
           {catalog && !shop.open && location.pathname === '/track' && <Track />}
         </div>
       </main>
-      <footer>
-        <div className="wrap">
-          <div>{settings.footer_logo ? <img className="retail-footer-logo" src={settings.footer_logo} alt={shopName} /> : <h3>{shopName}</h3>}<p>Computers, networking and IT accessories.</p>{shop?.address && <p>{shop.address}</p>}</div>
-          <div><h3>Shop</h3><p><Link to="/products">All products</Link></p><p><Link to="/wishlist">Wishlist</Link></p></div>
-          {(shop?.phone || shop?.tel || shop?.email) && <div><h3>Contact</h3>
-            {shop.phone && <p>Mobile: <a href={`tel:${shop.phone}`}>{shop.phone}</a></p>}
-            {shop.tel && <p>Tel: <a href={`tel:${shop.tel}`}>{shop.tel}</a></p>}
-            {shop.email && <p>Email: <a href={`mailto:${shop.email}`}>{shop.email}</a></p>}
-          </div>}
-          <div><h3>Orders</h3><p><Link to="/track">Track your order</Link></p><p>{[shop?.cod && 'Cash on delivery', shop?.bkash?.enabled && 'bKash'].filter(Boolean).join(' · ')}</p></div>
-        </div>
-        <div className="retail-socials">
-          {[['facebook', 'Facebook'], ['whatsapp', 'WhatsApp'], ['instagram', 'Instagram'], ['youtube', 'YouTube']]
-            .filter(([key]) => settings[key]).map(([key, label]) => <a key={key} href={settings[key]} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}><RetailIcon name={key} size={19} /></a>)}
-        </div>
-        <p className="powered">{shopName} · Independent Store</p>
-      </footer>
+      <StoreFooter settings={settings} shop={shop} />
       <div className="toasts" aria-live="polite">{toasts.map((t) => <div key={t.id} className={`toast ${t.kind === 'err' ? 'err' : ''}`}>{t.msg}</div>)}</div>
     </div>
   );
