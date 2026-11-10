@@ -11,6 +11,7 @@ export default function Products() {
   const [open, setOpen] = useState(false);
   const q = params.get('q') || '', g = params.get('g') || '', c = params.get('c') || '', b = params.get('b') || '';
   const inStock = params.get('stock') === '1', sort = params.get('sort') || 'new';
+  const minPrice = params.get('min') || '', maxPrice = params.get('max') || '';
   const set = (patch) => { const n = new URLSearchParams(params); Object.entries(patch).forEach(([k, v]) => (v ? n.set(k, v) : n.delete(k))); setParams(n, { replace: true }); setOpen(false); };
 
   const brandName = useMemo(() => Object.fromEntries(brands.map((x) => [x.id, x.name])), [brands]);
@@ -21,12 +22,14 @@ export default function Products() {
     if (c && p.category_id !== c) return false;
     if (b && p.brand_id !== b) return false;
     if (inStock && !p.in_stock) return false;
+    if (minPrice !== '' && Number(p.price) < Number(minPrice)) return false;
+    if (maxPrice !== '' && Number(p.price) > Number(maxPrice)) return false;
     if (!words.length) return true;
     const hay = [p.name, p.sku, brandName[p.brand_id], catName[p.group_id], catName[p.category_id], p.description].join(' ').toLowerCase();
     return words.every((w) => hay.includes(w));
   }).sort((x, y) => sort === 'low' ? x.price - y.price : sort === 'high' ? y.price - x.price : sort === 'name' ? x.name.localeCompare(y.name) : (x.created_at < y.created_at ? 1 : -1)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  [products, g, c, b, inStock, sort, q, brandName, catName]);
+  [products, g, c, b, inStock, sort, q, minPrice, maxPrice, brandName, catName]);
   const count = (pred) => products.filter(pred).length;
   const group = groups.find((x) => x.id === g);
   const title = q ? `Results for “${q}”` : c ? catName[c] : g ? catName[g] : b ? brandName[b] : 'All products';
@@ -48,6 +51,7 @@ export default function Products() {
               ))}
             </div>
           </div>
+          <div className="card"><h3>Price range (BDT)</h3><form className="price-range" onSubmit={e=>{e.preventDefault();const form=new FormData(e.currentTarget);set({min:form.get("min")||"",max:form.get("max")||""});}}><label>Minimum<input name="min" aria-label="Minimum price" type="number" min="0" defaultValue={minPrice} key={"min-"+minPrice} placeholder="0"/></label><label>Maximum<input name="max" aria-label="Maximum price" type="number" min="0" defaultValue={maxPrice} key={"max-"+maxPrice} placeholder="Any"/></label><button className="btn btn-primary" type="submit">Apply price</button></form>{(minPrice||maxPrice)&&<button className="clear-price" type="button" onClick={()=>set({min:"",max:""})}>Clear price range</button>}</div>
           {brands.length > 0 && <div className="card">
             <h3>Brands</h3>
             <div className="filter-list">

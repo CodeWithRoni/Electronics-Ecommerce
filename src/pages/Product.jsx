@@ -15,7 +15,8 @@ export default function Product() {
   if (!p) return <Empty title="This product is not available"><Link className="btn" to="/products">See all products</Link></Empty>;
   const brand = brands.find((b) => b.id === p.brand_id)?.name;
   const group = groups.find((g) => g.id === p.group_id), cat = group?.categories.find((c) => c.id === p.category_id);
-  const images = p.images.length ? p.images : [null];
+  const images = (p.images || []).length ? p.images : [null];
+  const details = [['Brand',brand],['Model',p.sku],['Category',cat?.name || group?.name],['Warranty',p.warranty_days > 0 ? warrantyText(p.warranty_days) : null],['Availability',p.in_stock ? 'In stock' : 'Out of stock']].filter(([,value])=>value);
   const related = products.filter((x) => x.id !== p.id && x.in_stock && (x.category_id ? x.category_id === p.category_id : x.group_id === p.group_id)).slice(0, 4);
   const step = p.decimal ? 0.5 : 1;
 
@@ -51,6 +52,7 @@ export default function Product() {
           </div>
         </div>
       </div>
+      <section className="product-detail-section" aria-label="Product information"><div className="section-head"><h2>Product details</h2></div><div className="product-detail-grid"><div className="card"><h3>Key specifications</h3><dl className="specification-list">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div><div className="card"><h3>Description</h3><div className="desc">{p.description || "More product information will be available soon."}</div></div></div></section>
       {related.length > 0 && <>
         <div className="section-head"><h2>You may also like</h2></div>
         <div className="grid">{related.map((x) => <ProductCard key={x.id} p={x} brand={brands.find((b) => b.id === x.brand_id)?.name} currency={shop.currency} />)}</div>
