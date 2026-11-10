@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RetailIcon } from '../components/retail';
 import { API_URL } from '../config';
 import { brandLogo } from '../lib/brand';
 import { money } from '../lib/format';
-import { buildCompatibility, pcSlots, productSlot } from '../lib/pcBuilder';
+import { buildCompatibility, corePcSlots, pcSlots, peripheralPcSlots, productSlot } from '../lib/pcBuilder';
 import { useShop } from '../lib/store';
 
 const storageKey = `geargrid_pc_build:${API_URL}`;
 const savedKey = `${storageKey}:saved`;
-const slotOrder = ['cpu', 'cooler', 'motherboard', 'memory', 'storage', 'graphics', 'power', 'case'];
+const slotGroups = [
+  { title: 'Core Components', slots: corePcSlots },
+  { title: 'Peripherals & Others', slots: peripheralPcSlots },
+];
+const powerSlots = [...corePcSlots.map(({ id }) => id).filter((id) => id !== 'power'), 'case_cooler', 'network_adapter'];
 
 function savedBuild(key = storageKey) {
   try {
@@ -80,8 +84,8 @@ export default function PcBuilder() {
   const checks = buildCompatibility(parts);
   const mismatch = checks.some(({ type }) => type === 'error');
   const total = money(chosen.reduce((sum, part) => sum + Number(part.price), 0), shop.currency);
-  const powered = Object.entries(parts).filter(([id, part]) => id !== 'power' && part);
-  const watts = powered.map(([, part]) => part.pc_specs?.watts).filter((value) => Number.isFinite(value) && value >= 0);
+  const powered = powerSlots.map((id) => parts[id]).filter(Boolean);
+  const watts = powered.map((part) => part.pc_specs?.watts).filter((value) => Number.isFinite(value) && value >= 0);
   const change = (value) => { setSelected(value); setError(''); setNotice(''); };
   const close = () => dialog.current.close();
   const add = () => {
@@ -112,30 +116,37 @@ export default function PcBuilder() {
       </header>
       <div className="builder-content">
         <div className="builder-meta">
-          <div><h1>PC Builder – Build Your Own Computer</h1><label className="check"><input type="checkbox" checked={hideEmpty} onChange={(event) => setHideEmpty(event.target.checked)} /> Hide unconfigured components</label></div>
+          <div><h1>PC Builder – Build Your Own Computer</h1><label className="check"><input type="checkbox" checked={hideEmpty} onChange={(event) => setHideEmpty(event.target.checked)} /> Hide Unconfigured Components</label></div>
           <div className="builder-figures">
-            <div><strong>{!chosen.length ? '0 W' : watts.length ? `${watts.reduce((a, b) => a + b, 0)} W` : '—'}</strong><small>{watts.length && watts.length < powered.length ? 'Partial wattage' : 'Estimated Wattage'}</small></div>
+            <div><strong>{!powered.length ? '0 W' : watts.length ? `${watts.reduce((a, b) => a + b, 0)} W` : '—'}</strong><small>{watts.length && watts.length < powered.length ? 'Partial wattage' : 'Estimated Wattage'}</small></div>
             <div><strong>{total}</strong><small>{chosen.length} {chosen.length === 1 ? 'item' : 'items'}</small></div>
           </div>
         </div>
-        <h2>Core Components</h2>
-        <section aria-label="PC components">
-          {slotOrder.map((id) => pcSlots.find((slot) => slot.id === id)).filter(({ id }) => !hideEmpty || selected[id]).map(({ id, label, icon, required }) => {
-            const part = parts[id];
-            return <div className="builder-slot" key={id}>
-              <span className="builder-slot-icon"><RetailIcon name={icon} size={24} /></span>
-              <div className="builder-slot-fields">
-                <div><strong>{label}</strong> {required && <small className="builder-required">Required</small>}</div>
-                {part ? <Link to={`/p/${encodeURIComponent(part.id)}`}>{part.name}</Link> : <span className="muted">{selected[id] ? 'Previously selected item unavailable' : 'No component selected'}</span>}
-              </div>
-              {part && <strong className="builder-part-price">{money(part.price, shop.currency)}</strong>}
-              <div className="builder-slot-actions">
-                <button type="button" className="btn" aria-label={`Choose ${label}`} onClick={() => setChoosing(id)}>{part ? 'Change' : 'Choose'}</button>
-                {selected[id] && <button type="button" className="builder-remove" onClick={() => change({ ...selected, [id]: '' })}>Remove<span className="sr-only"> {label}</span></button>}
-              </div>
-            </div>;
-          })}
-        </section>
+        {slotGroups.map(({ title, slots }) => {
+          const visibleSlots = slots.filter(({ id }) => !hideEmpty || selected[id]);
+          if (!visibleSlots.length) return null;
+
+          return <Fragment key={title}>
+            <h2>{title}</h2>
+            <section aria-label={title}>
+              {visibleSlots.map(({ id, label, icon, required }) => {
+                const part = parts[id];
+                return <div className="builder-slot" key={id}>
+                  <span className="builder-slot-icon"><RetailIcon name={icon} size={24} /></span>
+                  <div className="builder-slot-fields">
+                    <div><strong>{label}</strong> {required && <small className="builder-required">Required</small>}</div>
+                    {part ? <Link to={`/p/${encodeURIComponent(part.id)}`}>{part.name}</Link> : <span className="muted">{selected[id] ? 'Previously selected item unavailable' : 'No component selected'}</span>}
+                  </div>
+                  {part && <strong className="builder-part-price">{money(part.price, shop.currency)}</strong>}
+                  <div className="builder-slot-actions">
+                    <button type="button" className="btn" aria-label={`Choose ${label}`} onClick={() => setChoosing(id)}>{part ? 'Change' : 'Choose'}</button>
+                    {selected[id] && <button type="button" className="builder-remove" onClick={() => change({ ...selected, [id]: '' })}>Remove<span className="sr-only"> {label}</span></button>}
+                  </div>
+                </div>;
+              })}
+            </section>
+          </Fragment>;
+        })}
         <div className="builder-notes">
           {missing.length > 0 && <p>Core parts still to choose: {missing.join(', ')}.</p>}
           {unavailable && <p role="alert">Remove or replace unavailable selections before adding your parts.</p>}

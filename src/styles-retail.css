@@ -334,7 +334,8 @@
 .builder-actions button:disabled { opacity: .45; cursor: default; }
 .builder-content { padding: 23px clamp(12px, 5vw, 54px); }
 .builder-meta h1 { font-size: 17px; margin: 0 0 7px; }
-.builder-meta .check { color: var(--muted); font-size: 13px; }
+.builder-meta .check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.builder-meta .check input { flex: none; width: 16px; height: 16px; min-height: 0; margin: 0; padding: 0; accent-color: var(--retail-accent); }
 .builder-figures { display: flex; gap: 8px; }
 .builder-figures > div { display: grid; justify-items: center; min-width: 108px; padding: 7px 9px; border: 1px dashed var(--aqua); border-radius: 5px; }
 .builder-figures > div:last-child { color: white; background: #3346ab; border: 1px solid #3346ab; }

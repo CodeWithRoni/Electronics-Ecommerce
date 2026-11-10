@@ -1,13 +1,6 @@
-export const pcSlots = [
-  { id: 'cpu', label: 'Processor', icon: 'chip', pattern: /^(?:cpu|processors?|desktop processors?)$/i, required: true },
-  { id: 'motherboard', label: 'Motherboard', icon: 'chip', pattern: /^motherboards?$/i, required: true },
-  { id: 'memory', label: 'RAM', icon: 'chip', pattern: /^(?:ram|memory|desktop (?:memory|ram))$/i, required: true },
-  { id: 'storage', label: 'Storage', icon: 'storage', pattern: /^(?:ssd|hdd|internal storage|solid state drives?|hard disk drives?)$/i, required: true },
-  { id: 'graphics', label: 'Graphics card', icon: 'desktop', pattern: /^(?:gpu|graphics cards?|video cards?)$/i },
-  { id: 'power', label: 'Power supply', icon: 'bolt', pattern: /^(?:psu|power suppl(?:y|ies))$/i, required: true },
-  { id: 'case', label: 'PC case', icon: 'desktop', pattern: /^(?:pc cases?|casings?|computer cases?)$/i, required: true },
-  { id: 'cooler', label: 'CPU cooler', icon: 'box', pattern: /^(?:cpu coolers?|processor coolers?)$/i },
-];
+import { pcSlots } from '../../supabase/functions/geargrid-api/pc-slots.js';
+
+export { corePcSlots, peripheralPcSlots, pcSlots } from '../../supabase/functions/geargrid-api/pc-slots.js';
 
 export function productSlot(product, taxonomy) {
   const explicit = product.pc_specs?.slot;

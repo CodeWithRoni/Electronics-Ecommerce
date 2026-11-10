@@ -1,4 +1,7 @@
+import { pcSlots } from './pc-slots.js';
 import { cleanFooter, cleanSettings, httpsUrl } from './settings.js';
+
+const allowedPcSlots = new Set(['', 'none', ...pcSlots.map(({ id }) => id)]);
 
 const phoneNorm = (value) => String(value || '').replace(/\D/g, '').replace(/^880/, '0');
 
@@ -107,7 +110,7 @@ export function createHandler(env, db, auth, consoleData, upload) {
           const socket = String(spec.socket || '').trim().toUpperCase();
           const memory = String(spec.memory || '');
           const watts = spec.watts ?? null;
-          if (!['', 'none', 'cpu', 'motherboard', 'memory', 'storage', 'graphics', 'power', 'case', 'cooler'].includes(slot)
+          if (!allowedPcSlots.has(slot)
             || (watts !== null && (!Number.isSafeInteger(watts) || watts < 0 || watts > 3000))
             || (socket && !/^[A-Z0-9 -]{2,20}$/.test(socket)) || !['', 'DDR3', 'DDR4', 'DDR5'].includes(memory))
             throw new Error('Choose valid PC Builder specifications');
