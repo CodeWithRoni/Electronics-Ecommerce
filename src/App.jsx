@@ -42,7 +42,7 @@ function Shell() {
   return (
     <>
       {shop?.notice && shop.open && <div className="notice" role="note">{shop.notice}</div>}
-      <div className="top-utility"><div className="wrap"><span>Welcome to your technology store</span><span>Computer · Components · Accessories</span></div></div>
+      <div className="top-utility"><div className="wrap"><span>Computer, Networking & IT Accessories</span><span>Browse products · Check availability · Track orders</span></div></div>
       <header className="top">
         <div className="wrap">
           <button type="button" className="mobile-menu-toggle" aria-label="Toggle categories" aria-expanded={menuOpen} aria-controls="store-categories" onClick={()=>setMenuOpen(v=>!v)}>☰</button>
@@ -52,7 +52,7 @@ function Shell() {
           </Link>
           <form className="search" role="search" onSubmit={search}>
             <SearchIcon />
-            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, brands, models" aria-label="Search products" />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, brands, models" aria-label="Search products" /><button type="submit" className="header-search-submit" aria-label="Submit product search">Search</button>
           </form>
           <Link to="/wishlist" className="icon-btn" aria-label={`Wishlist, ${favoriteCount} saved`}>♡{favoriteCount>0&&<span className="cart-count">{favoriteCount}</span>}</Link>
           <button type="button" className="icon-btn" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}><ThemeIcon dark={theme === 'dark'} /></button>
