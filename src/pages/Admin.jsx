@@ -36,11 +36,15 @@ async function request(token, action, payload = {}) {
   if (!API_URL) throw Error('API endpoint not configured');
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    headers: { 'Content-Type': 'application/json', ...(token && { Authorization: 'Bearer ' + token }) },
     body: JSON.stringify({ action, payload }),
   });
   const data = await res.json();
-  if (!res.ok || !data.ok) throw Error(data.error || 'Request failed');
+  if (!res.ok || !data.ok) {
+    const error = new Error(data.error || 'Request failed');
+    error.status = res.status;
+    throw error;
+  }
   return data.data;
 }
 
@@ -93,6 +97,8 @@ function ProductEditor({ product, existing, busy, error, onChange, onClose, onSa
 }
 
 export default function Admin() {
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState('overview');
@@ -106,8 +112,8 @@ export default function Admin() {
   const [notice, setNotice] = useState('');
   const refreshShop = useShop((state) => state.load);
 
-  const refresh = async () => {
-    const [nextProducts, nextOrders] = await Promise.all([request(token, 'admin.products'), request(token, 'admin.orders')]);
+  const refresh = async (sessionToken = token) => {
+    const [nextProducts, nextOrders] = await Promise.all([request(sessionToken, 'admin.products'), request(sessionToken, 'admin.orders')]);
     setProducts(nextProducts);
     setOrders(nextOrders);
     setReady(true);
@@ -117,8 +123,22 @@ export default function Admin() {
     setError('');
     setNotice('');
     try { await action(); }
-    catch (failure) { setError(failure.message); }
+    catch (failure) {
+      if (token && failure.status === 401) {
+        lock();
+        setError('Your session has expired. Sign in again.');
+      } else setError(failure.message);
+    }
     finally { setBusy(false); }
+  };
+  const signIn = () => {
+    const credentials = { login, password };
+    setPassword('');
+    return run(async () => {
+      const session = await request('', 'admin.sign_in', credentials);
+      await refresh(session.access_token);
+      setToken(session.access_token);
+    });
   };
   const save = () => run(async () => {
     const edit = editor.product;
@@ -147,6 +167,7 @@ export default function Admin() {
   };
   const lock = () => {
     setToken('');
+    setPassword('');
     setReady(false);
     setProducts([]);
     setOrders([]);
@@ -171,10 +192,11 @@ export default function Admin() {
       <section className="console-login" aria-labelledby="login-heading">
         <div className="console-icon"><Icon name="lock" size={23} /></div>
         <h1 id="login-heading">Store administration</h1>
-        <p>Enter your GearGrid admin access token to unlock the dashboard.</p>
-        <form onSubmit={(event) => { event.preventDefault(); run(refresh); }}>
-          <label className="field"><span>Admin access token</span><input type="password" value={token} onChange={(event) => setToken(event.target.value)} required autoComplete="off" /></label>
-          <button className="btn btn-primary" disabled={busy}>{busy ? 'Unlocking…' : 'Unlock dashboard'}</button>
+        <p>Sign in with your GearGrid admin username or email and password.</p>
+        <form onSubmit={(event) => { event.preventDefault(); signIn(); }}>
+          <label className="field"><span>Username or email</span><input name="username" value={login} onChange={(event) => setLogin(event.target.value)} required autoComplete="username" autoCapitalize="none" spellCheck={false} /></label>
+          <label className="field"><span>Password</span><input name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" /></label>
+          <button className="btn btn-primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         </form>
         {error && <p className="console-alert" role="alert">{error}</p>}
       </section>
@@ -205,14 +227,14 @@ export default function Admin() {
       </nav>
       <div className="console-sidebar-actions">
         <a href="./"><Icon name="external" size={17} /> <span>View storefront</span></a>
-        <button type="button" onClick={lock} disabled={busy}><Icon name="lock" size={17} /> <span>Lock dashboard</span></button>
+        <button type="button" onClick={lock} disabled={busy}><Icon name="lock" size={17} /> <span>Sign out</span></button>
       </div>
     </aside>
 
     <main className="console-main">
       <header className="console-page-heading">
         <div><span className="console-kicker">STORE MANAGEMENT</span><h1>{heading[tab]}</h1><p>{description[tab]}</p></div>
-        <button type="button" className="btn" disabled={busy} onClick={() => run(refresh)}><Icon name="refresh" size={17} /> Refresh</button>
+        <button type="button" className="btn" disabled={busy} onClick={() => run(() => refresh())}><Icon name="refresh" size={17} /> Refresh</button>
       </header>
       {error && !editor && <p className="console-alert" role="alert">{error}</p>}
       {notice && <p className="console-notice" role="status">{notice}</p>}

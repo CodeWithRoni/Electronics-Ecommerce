@@ -31,7 +31,7 @@ npm run build
 Set `VITE_API_URL` in `.env.local` to override the default API for development. GitHub Pages builds on main branch pushes. See [Supabase setup](supabase/README.md) for the API and database.
 
 ## Admin
-At `/admin.html`, enter the `ADMIN_TOKEN` configured in Supabase Edge Function Secrets. The admin interface keeps it in memory, not browser storage. Admin can edit products, prices, stock, image URLs and order status. Never commit the token.
+At `/admin.html`, sign in with your GearGrid admin username or email and password. Admin accounts are provisioned in [Supabase](supabase/README.md) and can manage products, inventory and orders.
 
 ## Features and limitations
 Implemented: responsive catalog, category navigation, search, filters, sorting, wishlist, cart, checkout, manual bKash reference, order tracking, inventory and order admin.

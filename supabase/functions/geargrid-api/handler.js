@@ -1,18 +1,6 @@
 const phoneNorm = (value) => String(value || '').replace(/\D/g, '').replace(/^880/, '0');
-const encoder = new TextEncoder();
 
-async function authorized(header, token) {
-  if (!token || !header?.startsWith('Bearer ')) return false;
-  const digest = (value) => crypto.subtle.digest('SHA-256', encoder.encode(value));
-  const [provided, expected] = await Promise.all([digest(header.slice(7)), digest(token)]);
-  const bytes = new Uint8Array(provided);
-  const reference = new Uint8Array(expected);
-  let difference = 0;
-  for (let index = 0; index < bytes.length; index++) difference |= bytes[index] ^ reference[index];
-  return difference === 0;
-}
-
-export function createHandler(env, db) {
+export function createHandler(env, db, auth) {
   const allowed = env.ALLOWED_ORIGIN || 'https://codewithroni.github.io';
   const shop = {
     name: env.SHOP_NAME || 'GearGrid', open: true, currency: 'BDT',
@@ -114,17 +102,20 @@ export function createHandler(env, db) {
       if (action === 'shop.order.track')
         return ok(await db('track', { order_no: String(payload.order_no || ''), phone: phoneNorm(payload.phone) }));
       if (action === 'shop.order.create') {
-        if (!env.ADMIN_TOKEN || env.DATABASE_READ_ONLY === '1') return fail('Checkout is temporarily unavailable', 503);
+        if (env.DATABASE_READ_ONLY === '1') return fail('Checkout is temporarily unavailable', 503);
         return ok(await createOrder(payload));
       }
+      if (action === 'admin.sign_in') return ok(await auth.signIn(payload.login, payload.password));
       if (typeof action === 'string' && action.startsWith('admin.')) {
-        if (!await authorized(request.headers.get('Authorization'), env.ADMIN_TOKEN)) return fail('Unauthorized', 401);
+        if (!await auth.canManage(request.headers.get('Authorization'))) return fail('Unauthorized', 401);
         return ok(await admin(action, payload));
       }
       return fail('Unknown action', 404);
     } catch (error) {
       const message = error.message || 'Internal server error';
-      return fail(message, message === 'Store database is temporarily unavailable' ? 503 : 400);
+      if (message === 'Invalid username, email or password') return fail(message, 401);
+      if (message === 'Too many sign-in attempts. Try again shortly.') return fail(message, 429);
+      return fail(message, message.endsWith('temporarily unavailable') ? 503 : 400);
     }
   };
 }
