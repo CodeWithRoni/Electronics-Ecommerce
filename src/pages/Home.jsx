@@ -1,23 +1,78 @@
 import { Link } from 'react-router-dom';
 import { useShop } from '../lib/store';
 import { ProductCard, Empty } from '../components/ui';
-const categories=[['Laptop','💻'],['Desktop','🖥️'],['Monitor','📺'],['Networking','📡'],['Accessories','⌨️'],['Components','⚙️'],['Storage','💾'],['Security','📷']];
-export default function Home(){
- const {shop,products,groups,brands}=useShop(s=>s.catalog);
- const brandName=Object.fromEntries(brands.map(b=>[b.id,b.name]));
- const featured=products.filter(p=>p.in_stock).slice(0,8);
- const fresh=[...products].sort((a,b)=>a.created_at<b.created_at?1:-1).slice(0,12);
- return <div className="store-home">
-  <section className="store-hero"><div className="hero-main"><span className="eyebrow">YOUR TECH DESTINATION</span><h1>Upgrade your world with better technology.</h1><p>Discover computers, accessories, components and networking essentials—all in one convenient store.</p><div className="hero-actions"><Link className="btn btn-primary btn-lg" to="/products">Shop all products →</Link><Link className="btn btn-ghost btn-lg" to="/track">Track your order</Link></div><div className="hero-trust"><span>✓ Secure checkout</span><span>✓ Order tracking</span><span>✓ Local support</span></div></div><div className="hero-visual" aria-hidden="true"><div className="tech-orbit orbit-a"></div><div className="tech-orbit orbit-b"></div><div className="tech-display">⌘</div><span className="tech-pill pill-a">PERFORMANCE</span><span className="tech-pill pill-b">TECH ESSENTIALS</span></div></section>
-  <section className="retail-highlights" aria-label="Store highlights"><div className="retail-highlight retail-highlight-primary"><span className="eyebrow">SHOP SMARTER</span><h2>Explore your next tech upgrade</h2><p>Find the right devices, components and accessories for your setup.</p><Link to="/products">Explore all products →</Link></div><div className="retail-highlight retail-highlight-secondary"><span className="eyebrow">BUILD YOUR SETUP</span><h2>Components & accessories</h2><p>Browse parts and essentials for work and play.</p><Link to="/products?g=Components">Shop components →</Link></div></section>
-  <section className="service-strip"><div><strong>🚚 Delivery options</strong><small>See rates at checkout</small></div><div><strong>🛡️ Trusted shopping</strong><small>Clear product details</small></div><div><strong>💳 Flexible payment</strong><small>{shop.cod?'Cash on delivery':'Contact for payment'}{shop.bkash.enabled?' · bKash':''}</small></div><div><strong>📦 Track orders</strong><small>Follow your purchase</small></div></section>
-  <div className="section-head"><div><span className="eyebrow">FIND WHAT YOU NEED</span><h2>Shop by category</h2></div><Link to="/products" className="link">All categories →</Link></div>
-  <nav className="category-grid" aria-label="Shop categories">{(groups.length?groups.map((g,i)=>[g.name,categories[i%categories.length][1],g.id]):categories.map(([n,icon])=>[n,icon,n])).map(([name,icon,id])=><Link key={id} to={'/products?g='+encodeURIComponent(id)} className="category-tile"><span>{icon}</span><b>{name}</b><small>Explore →</small></Link>)}</nav>
-  {featured.length>0&&<section className="featured-products"><div className="section-head"><div><span className="eyebrow">POPULAR PICKS</span><h2>Available right now</h2></div><Link to="/products?stock=1" className="link">Shop in-stock →</Link></div><div className="grid">{featured.map(p=><ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency}/>)}</div></section>}
-  <section className="promo-band"><div><span className="eyebrow">EXPLORE THE COLLECTION</span><h2>Everything for your perfect setup</h2><p>Browse components, peripherals and everyday tech.</p></div><Link to="/products" className="btn btn-primary">Explore products →</Link></section>
-  <section className="store-benefits" aria-label="Shopping benefits"><div><strong>Find your next upgrade</strong><p>Explore laptops, desktops, components, and networking gear by category.</p><Link to="/products">Browse catalog →</Link></div><div><strong>Compare your options</strong><p>Review product specifications and current prices before ordering.</p><Link to="/products">Explore products →</Link></div><div><strong>Order with confidence</strong><p>Choose an available payment method and track your order after checkout.</p><Link to="/track">Track an order →</Link></div></section>
-  <div className="section-head"><div><span className="eyebrow">JUST ADDED</span><h2>Latest products</h2></div><Link to="/products" className="link">View all {products.length} →</Link></div>
-  {fresh.length?<div className="grid">{fresh.map(p=><ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency}/>)}</div>:<Empty title="Products are coming soon">Our catalog is being prepared. Please check back soon.</Empty>}
-  <section className="bottom-promo"><div><span className="eyebrow">NEED HELP?</span><h2>Find the right product for your needs.</h2><p>Browse our selection or reach out to the store for assistance.</p></div><Link to="/products" className="btn btn-primary">Start shopping</Link></section>
- </div>;
+import { RetailIcon, shopDepartments } from '../components/retail';
+import heroArt from '../assets/retail-hero.svg';
+
+export default function Home() {
+  const { shop, products, groups, brands } = useShop((s) => s.catalog);
+  const brandName = Object.fromEntries(brands.map((brand) => [brand.id, brand.name]));
+  const featured = [...products].sort((a, b) =>
+    Number(b.in_stock) - Number(a.in_stock) ||
+    String(b.created_at || '').localeCompare(String(a.created_at || ''))
+  ).slice(0, 10);
+  const payments = [shop.cod && 'Cash on delivery', shop.bkash?.enabled && 'bKash'].filter(Boolean);
+  const departments = shopDepartments(groups);
+
+  return (
+    <div className="retail-home">
+      <div className="retail-masthead">
+        <section className="retail-hero" aria-labelledby="home-title">
+          <div className="retail-hero-copy">
+            <span className="retail-kicker">COMPUTERS & ELECTRONICS</span>
+            <h1 id="home-title">Tech for every<br className="desktop-break" /> setup<span>.</span></h1>
+            <p>Explore computer parts, networking gear and everyday accessories in one place.</p>
+            <Link className="btn btn-primary" to="/products">Shop all products <span aria-hidden="true">→</span></Link>
+          </div>
+          <img className="retail-hero-art" src={heroArt} alt="" fetchPriority="high" />
+        </section>
+
+        <aside className="retail-shortcuts" aria-label="Shopping shortcuts">
+          <Link className="retail-shortcut retail-shortcut-stock" to="/products?stock=1">
+            <RetailIcon name="bolt" />
+            <div><strong>Ready to order</strong><span>Shop in-stock products</span></div>
+            <span aria-hidden="true">↗︎</span>
+          </Link>
+          <Link className="retail-shortcut retail-shortcut-track" to="/track">
+            <RetailIcon name="box" />
+            <div><strong>Track your order</strong><span>Check your order status</span></div>
+            <span aria-hidden="true">↗︎</span>
+          </Link>
+        </aside>
+      </div>
+
+      <section className="retail-services" aria-label="Shopping information">
+        <div><RetailIcon name="truck" /><span><strong>Delivery options</strong><small>See rates at checkout</small></span></div>
+        <div><RetailIcon name="wallet" /><span><strong>Payment options</strong><small>{payments.join(' · ') || 'See options at checkout'}</small></span></div>
+        <Link to="/wishlist"><RetailIcon name="heart" /><span><strong>Your wishlist</strong><small>Save products for later</small></span></Link>
+      </section>
+
+      <section className="retail-section" aria-labelledby="department-title">
+        <div className="retail-section-heading">
+          <h2 id="department-title">Shop by category</h2>
+          <p>Browse computers, components, peripherals and more.</p>
+        </div>
+        <nav className="retail-departments" aria-label="Shop by category">
+          {departments.map(({ name, to, icon }) => (
+            <Link key={to} to={to}><RetailIcon name={icon} size={29} /><span>{name}</span></Link>
+          ))}
+        </nav>
+      </section>
+
+      <section className="retail-section" aria-labelledby="featured-title">
+        <div className="retail-section-heading">
+          <h2 id="featured-title">Featured products</h2>
+          <p>Browse the latest products in our catalog.</p>
+          <Link to="/products" className="retail-section-link">View all products <span aria-hidden="true">→</span></Link>
+        </div>
+        {featured.length ? (
+          <div className="grid retail-product-grid">
+            {featured.map((p) => <ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency} />)}
+          </div>
+        ) : (
+          <Empty title="Products are coming soon"><p className="muted">Check back for new arrivals.</p></Empty>
+        )}
+      </section>
+    </div>
+  );
 }

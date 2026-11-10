@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useShop } from '../lib/store';
 import { ProductCard, Empty } from '../components/ui';
 
@@ -32,13 +32,14 @@ export default function Products() {
   [products, g, c, b, inStock, sort, q, minPrice, maxPrice, brandName, catName]);
   const count = (pred) => products.filter(pred).length;
   const group = groups.find((x) => x.id === g);
-  const title = q ? `Results for “${q}”` : c ? catName[c] : g ? catName[g] : b ? brandName[b] : 'All products';
+  const title = q ? `Results for “${q}”` : catName[c] || catName[g] || brandName[b] || c || g || b || (inStock ? 'In-stock products' : 'All products');
 
   return (
     <>
+      <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link> <span aria-hidden="true">/</span> <Link to="/products">Catalog</Link></nav>
       <div className="page-title"><h1>{title}</h1><span className="muted">{list.length} product{list.length === 1 ? '' : 's'}</span></div>
       <div className="shop-layout">
-        <aside className={`filters ${open ? 'open' : ''}`} aria-label="Filters">
+        <aside id="catalog-filters" className={`filters ${open ? 'open' : ''}`} aria-label="Filters">
           <div className="card">
             <h3>Groups</h3>
             <div className="filter-list">
@@ -62,7 +63,7 @@ export default function Products() {
         </aside>
         <section>
           <div className="toolbar">
-            <button type="button" className="btn filters-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'Hide filters' : 'Filters'}{(g || b) ? ' •' : ''}</button>
+            <button type="button" className="btn filters-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="catalog-filters">{open ? 'Hide filters' : 'Filters'}{(g || b) ? ' •' : ''}</button>
             <label className="check"><input type="checkbox" checked={inStock} onChange={(e) => set({ stock: e.target.checked ? '1' : '' })} /> In stock only</label>
             <select value={sort} onChange={(e) => set({ sort: e.target.value === 'new' ? '' : e.target.value })} aria-label="Sort">{SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
           </div>
@@ -70,7 +71,7 @@ export default function Products() {
             <button type="button" className={`chip ${!c ? 'on' : ''}`} onClick={() => set({ c: '' })}>All {group.name}</button>
             {group.categories.map((y) => <button key={y.id} type="button" className={`chip ${c === y.id ? 'on' : ''}`} onClick={() => set({ c: y.id })}>{y.name}</button>)}
           </nav>}
-          {list.length ? <div className="grid">{list.map((p) => <ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency} />)}</div>
+          {list.length ? <div className="grid retail-product-grid">{list.map((p) => <ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency} />)}</div>
             : <Empty title="No products found"><button type="button" className="btn" onClick={() => setParams({}, { replace: true })}>Clear search and filters</button></Empty>}
         </section>
       </div>
