@@ -23,6 +23,7 @@ function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
   const [q, setQ] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { load(); }, [load]);
   // fresh prices and stock when the visitor comes back to the tab
   useEffect(() => {
@@ -31,7 +32,7 @@ function Shell() {
     return () => document.removeEventListener('visibilitychange', again);
   }, [load]);
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+  useEffect(() => { window.scrollTo(0, 0); setMenuOpen(false); }, [location.pathname]);
   useEffect(() => { if (catalog?.shop?.name) document.title = `${catalog.shop.name} — Online Shop`; }, [catalog?.shop?.name]);
 
   const shop = catalog?.shop;
@@ -44,6 +45,7 @@ function Shell() {
       <div className="top-utility"><div className="wrap"><span>Welcome to your technology store</span><span>Computer · Components · Accessories</span></div></div>
       <header className="top">
         <div className="wrap">
+          <button type="button" className="mobile-menu-toggle" aria-label="Toggle categories" aria-expanded={menuOpen} aria-controls="store-categories" onClick={()=>setMenuOpen(v=>!v)}>☰</button>
           <Link to="/" className="brand" aria-label={`${shop?.name || 'Shop'} home`}>
             <span aria-hidden="true" style={{fontSize:28}}>⚡</span>
             <span><b>{shop?.name || 'Online Shop'}</b><small>Computer · IT · Networking</small></span>
@@ -59,7 +61,7 @@ function Shell() {
           </Link>
         </div>
       </header>
-      <nav className="category-nav"><div className="wrap"><Link to="/products" className="nav-special">☰ All Products</Link>{(catalog?.groups?.length?catalog.groups.map(g=>({id:g.id,name:g.name})):["Laptop","Desktop","Monitor","Networking","Accessories","Components","Storage","Security"].map(name=>({id:name,name}))).map(g=><Link key={g.id} to={`/products?g=${encodeURIComponent(g.id)}`}>{g.name}</Link>)}<Link to="/track">Track Order</Link></div></nav>
+      <nav id="store-categories" className={`category-nav ${menuOpen ? "menu-open" : ""}`} aria-label="Product categories"><div className="wrap"><Link to="/products" className="nav-special">☰ All Products</Link>{(catalog?.groups?.length?catalog.groups.map(g=>({id:g.id,name:g.name})):["Laptop","Desktop","Monitor","Networking","Accessories","Components","Storage","Security"].map(name=>({id:name,name}))).map(g=><Link key={g.id} to={`/products?g=${encodeURIComponent(g.id)}`}>{g.name}</Link>)}<Link to="/track">Track Order</Link></div></nav>
       <main>
         <div className="wrap">
           {!catalog ? (error ? <div className="closed"><b>The shop could not be loaded</b><p className="muted">{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div> : <Spinner label="Loading the shop" />)
