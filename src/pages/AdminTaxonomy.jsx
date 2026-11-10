@@ -59,71 +59,80 @@ function TaxonomyCard({ kind, items, groups, busy, save, remove, importRows, Ico
       </div>
     </header>
     <p className="taxonomy-card-description">{description}</p>
-    {error && <p className="console-alert" role="alert">{error}</p>}
-    {preview && <div className="taxonomy-preview">
-      <strong>Import preview · {preview.rows.length} {preview.rows.length === 1 ? 'row' : 'rows'}</strong>
-      <small>{preview.file}</small>
-      <ul>{preview.rows.slice(0, 4).map(({ name, group_name }, i) => <li key={i}>{name}{group_name && <small>{group_name}</small>}</li>)}</ul>
-      {preview.rows.length > 4 && <small>+ {preview.rows.length - 4} more</small>}
-      <p>Existing names in the same section are skipped.</p>
-      <div className="console-row-actions">
-        <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => importRows(kind, preview.rows, () => setPreview(null))}>Confirm import</button>
-        <button type="button" className="btn" disabled={disabled} onClick={() => setPreview(null)}>Cancel</button>
-      </div>
-    </div>}
-    <div className="taxonomy-toolbar">
-      <input type="search" aria-label={`Search ${title}`} placeholder={`Search ${title.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} />
-      <button type="button" className="btn btn-primary" disabled={disabled || (isSubcategory && !groups.length)} onClick={() => setEntry({ ...newEntry(kind), group_id: parent })}>+ Add {singular}</button>
-      {isSubcategory && <select aria-label="Filter by parent category" value={parent} onChange={(event) => setParent(event.target.value)}>
-        <option value="">All parent categories</option>
-        {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-      </select>}
-    </div>
-    {entry && <form className="taxonomy-editor" onSubmit={(event) => {
-      event.preventDefault();
-      save(entry, () => { setEntry(null); setSearch(''); });
-    }}>
-      <strong>{entry.id ? 'Edit' : 'New'} {singular}</strong>
-      {isSubcategory && <label className="field"><span>Parent category</span>
-        <select required disabled={disabled || Boolean(entry.id)} value={entry.group_id} onChange={(event) => change('group_id', event.target.value)}>
-          <option value="">Choose a category</option>
+    <div className="taxonomy-card-body">
+      {error && <p className="console-alert" role="alert">{error}</p>}
+      {preview && <div className="taxonomy-preview">
+        <strong>Import preview · {preview.rows.length} {preview.rows.length === 1 ? 'row' : 'rows'}</strong>
+        <small>{preview.file}</small>
+        <ul>{preview.rows.slice(0, 4).map(({ name, group_name }, i) => <li key={i}>{name}{group_name && <small>{group_name}</small>}</li>)}</ul>
+        {preview.rows.length > 4 && <small>+ {preview.rows.length - 4} more</small>}
+        <p>Existing names in the same section are skipped.</p>
+        <div className="console-row-actions">
+          <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => importRows(kind, preview.rows, () => setPreview(null))}>Confirm import</button>
+          <button type="button" className="btn" disabled={disabled} onClick={() => setPreview(null)}>Cancel</button>
+        </div>
+      </div>}
+      <div className="taxonomy-toolbar">
+        <input type="search" aria-label={`Search ${title}`} placeholder={`Search ${title.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} />
+        <button type="button" className="btn btn-primary" disabled={disabled || (isSubcategory && !groups.length)} onClick={() => setEntry({ ...newEntry(kind), group_id: parent })}>+ Add {singular}</button>
+        {isSubcategory && <select aria-label="Filter by parent category" value={parent} onChange={(event) => setParent(event.target.value)}>
+          <option value="">All parent categories</option>
           {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-        </select>
-      </label>}
-      <label className="field"><span>Name</span><input required maxLength={100} disabled={disabled} value={entry.name} onChange={(event) => change('name', event.target.value)} /></label>
-      <div className="console-row-actions">
-        <button className="btn btn-primary" disabled={disabled || !entry.name.trim()}>{entry.id ? 'Save name' : `Create ${singular}`}</button>
-        <button type="button" className="btn" disabled={disabled} onClick={() => setEntry(null)}>Cancel</button>
+        </select>}
       </div>
-    </form>}
-    {visible.length ? <ul className="taxonomy-list">
-      {visible.map((item) => <li key={JSON.stringify([item.group_id, item.id])}>
-        <div><strong>{item.name}</strong>
-          {item.group_name && <small>{item.group_name}</small>}
-          {kind === 'group' && <small>{item.categories.length} {item.categories.length === 1 ? 'subcategory' : 'subcategories'}</small>}
+      {entry && <form className="taxonomy-editor" onSubmit={(event) => {
+        event.preventDefault();
+        save(entry, () => { setEntry(null); setSearch(''); });
+      }}>
+        <strong>{entry.id ? 'Edit' : 'New'} {singular}</strong>
+        {isSubcategory && <label className="field"><span>Parent category</span>
+          <select required disabled={disabled || Boolean(entry.id)} value={entry.group_id} onChange={(event) => change('group_id', event.target.value)}>
+            <option value="">Choose a category</option>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select>
+        </label>}
+        <label className="field"><span>Name</span><input required maxLength={100} disabled={disabled} value={entry.name} onChange={(event) => change('name', event.target.value)} /></label>
+        <div className="console-row-actions">
+          <button className="btn btn-primary" disabled={disabled || !entry.name.trim()}>{entry.id ? 'Save name' : `Create ${singular}`}</button>
+          <button type="button" className="btn" disabled={disabled} onClick={() => setEntry(null)}>Cancel</button>
         </div>
-        <div className="taxonomy-item-actions">
-          <button type="button" title={`Edit ${item.name}`} aria-label={`Edit ${item.name}`} disabled={disabled} onClick={() => setEntry({ ...item, kind })}><Icon name="edit" size={16} /></button>
-          <button type="button" title={`Delete ${item.name}`} aria-label={`Delete ${item.name}`} disabled={disabled} onClick={() => {
-            if (window.confirm(`Delete ${item.name}?`)) remove({ ...item, kind }, () => {
-              if (entry?.id === item.id && entry.group_id === item.group_id) setEntry(null);
-              if (parent === item.id) setParent('');
-            });
-          }}><Icon name="trash" size={16} /></button>
-        </div>
-      </li>)}
-    </ul> : <p className="taxonomy-empty">{isSubcategory && !groups.length ? 'Add a category first.' : items.length ? 'No entries match your filters.' : `No ${title.toLowerCase()} yet.`}</p>}
+      </form>}
+      {visible.length ? <ul className="taxonomy-list">
+        {visible.map((item) => <li key={JSON.stringify([item.group_id, item.id])}>
+          <div><strong>{item.name}</strong>
+            {item.group_name && <small>{item.group_name}</small>}
+            {kind === 'group' && <small>{item.categories.length} {item.categories.length === 1 ? 'subcategory' : 'subcategories'}</small>}
+          </div>
+          <div className="taxonomy-item-actions">
+            <button type="button" title={`Edit ${item.name}`} aria-label={`Edit ${item.name}`} disabled={disabled} onClick={() => setEntry({ ...item, kind })}><Icon name="edit" size={16} /></button>
+            <button type="button" title={`Delete ${item.name}`} aria-label={`Delete ${item.name}`} disabled={disabled} onClick={() => {
+              if (window.confirm(`Delete ${item.name}?`)) remove({ ...item, kind }, () => {
+                if (entry?.id === item.id && entry.group_id === item.group_id) setEntry(null);
+                if (parent === item.id) setParent('');
+              });
+            }}><Icon name="trash" size={16} /></button>
+          </div>
+        </li>)}
+      </ul> : <p className="taxonomy-empty">{isSubcategory && !groups.length ? 'Add a category first.' : items.length ? 'No entries match your filters.' : `No ${title.toLowerCase()} yet.`}</p>}
+    </div>
   </section>;
 }
 
-export default function AdminTaxonomy({ groups, brands, brandOnly, ...actions }) {
+export default function AdminTaxonomy({ groups, brands, brandOnly, Icon, ...actions }) {
   const categories = groups.flatMap((group) => group.categories.map((category) => ({
     ...category, group_id: group.id, group_name: group.name,
   })));
   const lists = { group: groups, category: categories, brand: brands };
 
-  return <div className="taxonomy-grid">
+  return <div className={`taxonomy-grid${brandOnly ? ' taxonomy-grid-single' : ''}`}>
     {(brandOnly ? ['brand'] : Object.keys(sections)).map((kind) =>
-      <TaxonomyCard key={kind} kind={kind} items={lists[kind]} groups={groups} {...actions} />)}
+      <TaxonomyCard key={kind} kind={kind} items={lists[kind]} groups={groups} Icon={Icon} {...actions} />)}
+    {!brandOnly && <section className="console-panel taxonomy-card" aria-labelledby="taxonomy-attributes">
+      <header className="taxonomy-card-heading">
+        <div className="taxonomy-card-icon"><Icon name="settings" size={19} /></div>
+        <div className="taxonomy-card-title"><h2 id="taxonomy-attributes">Attributes &amp; Variants</h2><span>Planned</span></div>
+      </header>
+      <p className="taxonomy-card-description">Product options such as color, size and configuration.</p>
+    </section>}
   </div>;
 }
