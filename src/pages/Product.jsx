@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../lib/store';
 import { money, warrantyText } from '../lib/format';
+import { isOffer } from '../lib/pcBuilder';
 import { Photo, StockBadge, Stepper, Empty, ProductCard } from '../components/ui';
 
 export default function Product() {
@@ -16,7 +17,7 @@ export default function Product() {
   const brand = brands.find((b) => b.id === p.brand_id)?.name;
   const group = groups.find((g) => g.id === p.group_id), cat = group?.categories.find((c) => c.id === p.category_id);
   const images = (p.images || []).length ? p.images : [null];
-  const details = [['Brand',brand],['Model',p.sku],['Category',cat?.name || group?.name],['Warranty',p.warranty_days > 0 ? warrantyText(p.warranty_days) : null],['Availability',p.in_stock ? 'In stock' : 'Out of stock']].filter(([,value])=>value);
+  const details = [['Brand',brand],['Model',p.sku],['Category',cat?.name || group?.name],['CPU socket',p.pc_specs?.socket],['Memory type',p.pc_specs?.memory],['Warranty',p.warranty_days > 0 ? warrantyText(p.warranty_days) : null],['Availability',p.in_stock ? 'In stock' : 'Out of stock']].filter(([,value])=>value);
   const related = products.filter((x) => x.id !== p.id && x.in_stock && (x.category_id ? x.category_id === p.category_id : x.group_id === p.group_id)).slice(0, 4);
   const step = p.decimal ? 0.5 : 1;
 
@@ -31,7 +32,7 @@ export default function Product() {
         <div className="pdp-info">
           {brand && <span className="pcard-brand">{brand}</span>}
           <h1>{p.name}</h1>
-          <div className="buy"><span className="price">{money(p.price, shop.currency)}{p.decimal ? <small className="muted"> / {p.unit}</small> : null}</span><StockBadge p={p} /></div>
+          <div className="buy"><span className="price">{money(p.price, shop.currency)} {isOffer(p) && <s className="retail-previous-price">{money(p.compare_at_price, shop.currency)}</s>}{p.decimal ? <small className="muted"> / {p.unit}</small> : null}</span><StockBadge p={p} /></div>
           <div className="facts">
             {p.sku && <span>Model: {p.sku}</span>}
             {p.warranty_days > 0 && <span>{warrantyText(p.warranty_days)}</span>}

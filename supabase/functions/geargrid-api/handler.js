@@ -94,11 +94,28 @@ export function createHandler(env, db, auth, consoleData, upload) {
         const expected = payload.expected_stock;
         if (expected != null && (!Number.isSafeInteger(expected) || expected < 0 || expected > 2147483647))
           throw new Error('Invalid original stock');
+        const details = {};
+        if (Object.hasOwn(p, 'compare_at_price')) {
+          const previous = p.compare_at_price === '' || p.compare_at_price == null ? null : Number(p.compare_at_price);
+          if (previous !== null && (!Number.isFinite(previous) || previous <= price))
+            throw new Error('Regular price must be higher than the selling price');
+          details.compare_at_price = previous;
+        }
+        if (Object.hasOwn(p, 'pc_specs')) {
+          const spec = p.pc_specs || {};
+          const slot = String(spec.slot || '');
+          const socket = String(spec.socket || '').trim().toUpperCase();
+          const memory = String(spec.memory || '');
+          if (!['', 'none', 'cpu', 'motherboard', 'memory', 'storage', 'graphics', 'power', 'case', 'cooler'].includes(slot)
+            || (socket && !/^[A-Z0-9 -]{2,20}$/.test(socket)) || !['', 'DDR3', 'DDR4', 'DDR5'].includes(memory))
+            throw new Error('Choose valid PC Builder specifications');
+          details.pc_specs = { slot, socket, memory };
+        }
         return consoleData('product_save', {
           id: p.id, name: p.name, sku: p.sku || '', description: p.description || '', price, stock,
           group_id: p.group_id || '', category_id: p.category_id || '', brand_id: p.brand_id || '',
           unit: p.unit || 'pcs', image: httpsUrl(p.image), active: p.active === false ? 0 : 1,
-          create_only: payload.create_only === true, expected_stock: expected,
+          create_only: payload.create_only === true, expected_stock: expected, ...details,
         });
       }
       case 'admin.order.status':

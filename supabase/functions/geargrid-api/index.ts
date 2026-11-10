@@ -21,6 +21,8 @@ Deno.serve(createHandler(
   auth,
   (action, payload = {}) => action === 'settings_patch'
     ? rpc(url, key, 'geargrid_settings_patch', { p_patch: payload })
-    : rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload }),
+    : action === 'product_save'
+      ? rpc(url, key, 'geargrid_product_details_save', { p_payload: payload })
+      : rpc(url, key, 'geargrid_console', { p_action: action, p_payload: payload }),
   (file) => uploadMedia(url, key, file),
 ));

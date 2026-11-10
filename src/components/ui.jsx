@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isOffer } from '../lib/pcBuilder';
 import { Link } from 'react-router-dom';
 import { imageUrl } from '../lib/api';
 import { useShop } from '../lib/store';
@@ -43,7 +44,7 @@ export function ProductCard({ p, brand, currency }) {
         <div className="pcard-body">
           {brand && <span className="pcard-brand">{brand}</span>}
           <span className="pcard-name">{p.name}</span>
-          <span className="price">{money(p.price, currency)}{p.decimal ? <small className="muted"> / {p.unit}</small> : null}</span>
+          <span className="price">{money(p.price, currency)} {isOffer(p) && <s className="retail-previous-price">{money(p.compare_at_price, currency)}</s>}{p.decimal ? <small className="muted"> / {p.unit}</small> : null}</span>
         </div>
       </Link>
       <div className="pcard-foot">

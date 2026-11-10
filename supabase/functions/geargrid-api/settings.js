@@ -14,7 +14,7 @@ export function cleanSettings(payload) {
     throw new Error('Low stock threshold must be a whole number from 0 to 100,000');
   const bannerLink = String(payload.banner_link || '').trim();
   const allowedRoute = /^#\/(?:products(?:\?[^#]*)?|p\/[^/?#]+)$/.test(bannerLink);
-  return {
+  const cleaned = {
     shop_name: String(payload.shop_name || '').trim().slice(0, 80),
     low_stock_threshold: limit,
     header_logo: httpsUrl(payload.header_logo),
@@ -25,6 +25,7 @@ export function cleanSettings(payload) {
     banner_button: String(payload.banner_button || '').trim().slice(0, 40),
     banner_link: allowedRoute && bannerLink.length <= 2000 ? bannerLink : httpsUrl(bannerLink),
   };
+  return Object.fromEntries(Object.entries(cleaned).filter(([key]) => Object.hasOwn(payload, key)));
 }
 
 function footerLink(value) {

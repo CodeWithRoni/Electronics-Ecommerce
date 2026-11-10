@@ -4,17 +4,12 @@ import { useShop } from '../lib/store';
 import { money } from '../lib/format';
 import { ImageField, StoreSettings, Taxonomy } from './AdminStore';
 import AdminFooter from './AdminFooter';
+import AdminNavigation from './AdminNavigation';
+import { Customers, SalesReport } from './AdminInsights';
+import { pcSlots } from '../lib/pcBuilder';
 
 const emptyProduct = { id: '', name: '', sku: '', description: '', price: 0, stock: 0, group_id: '', category_id: '', brand_id: '', image: '', unit: 'pcs', active: true };
 const statuses = { new: 'New', confirmed: 'Confirmed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
-const sections = [
-  ['overview', 'Overview', 'dashboard'],
-  ['products', 'Products & inventory', 'box'],
-  ['orders', 'Customer orders', 'orders'],
-  ['taxonomy', 'Catalog structure', 'stock'],
-  ['settings', 'Storefront settings', 'settings'],
-  ['footer', 'Footer Settings', 'footer'],
-];
 const productFields = [
   ['id', 'Product ID', true], ['sku', 'Model / SKU'],
   ['name', 'Product name', true], ['price', 'Price (BDT)', true, 'number'],
@@ -31,6 +26,10 @@ const paths = {
   lock: 'M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5zM12 15v2',
   settings: 'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6',
   footer: 'M3 4h18v16H3zM3 14h18M8 17h8',
+  user: 'M4 21v-2a8 8 0 0 1 16 0v2M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
+  gift: 'M4 10h16v11H4zM3 7h18v4H3zM12 7v14',
+  reports: 'M4 3v17h16M8 17v-5m5 5V8m5 9V5',
+  menu: 'M4 6h16M4 12h16M4 18h16',
   external: 'M13 4h7v7m0-7-9 9m7 1v6H4V6h6',
 };
 
@@ -120,6 +119,26 @@ function ProductEditor({ product, groups, brands, upload, existing, busy, error,
       <label className="field"><span>Brand</span><select value={product.brand_id || ''} onChange={(event) => onChange('brand_id', event.target.value)}>
         <option value="">No brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
       </select></label>
+      <label className="field"><span>Regular price before discount (BDT)</span>
+        <input type="number" min="0.01" step="0.01" value={product.compare_at_price ?? ''} onChange={(event) => onChange('compare_at_price', event.target.value)} />
+      </label>
+      <fieldset className="console-wide console-builder-fields">
+        <legend>PC Builder</legend>
+        <label className="field"><span>Component type</span>
+          <select value={product.pc_specs?.slot || ''} onChange={(event) => onChange('pc_specs', { ...product.pc_specs, slot: event.target.value })}>
+            <option value="">Auto from category</option><option value="none">Exclude from builder</option>
+            {pcSlots.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+          </select>
+        </label>
+        <label className="field"><span>CPU socket (processor or motherboard)</span>
+          <input maxLength={20} placeholder="AM5, LGA1700…" value={product.pc_specs?.socket || ''} onChange={(event) => onChange('pc_specs', { ...product.pc_specs, socket: event.target.value })} />
+        </label>
+        <label className="field"><span>Memory type (RAM or motherboard)</span>
+          <select value={product.pc_specs?.memory || ''} onChange={(event) => onChange('pc_specs', { ...product.pc_specs, memory: event.target.value })}>
+            <option value="">Unspecified</option>{['DDR3', 'DDR4', 'DDR5'].map((type) => <option key={type}>{type}</option>)}
+          </select>
+        </label>
+      </fieldset>
       <div className="console-wide"><ImageField label="Product image" value={product.image} onChange={(value) => onChange('image', value)} upload={upload} busy={busy} /></div>
       <label className="field console-wide"><span>Description / specifications</span><textarea value={product.description || ''} onChange={(event) => onChange('description', event.target.value)} /></label>
       <label className="console-visibility console-wide"><input type="checkbox" checked={!!product.active} onChange={(event) => onChange('active', event.target.checked)} /> Show on storefront</label>
@@ -150,6 +169,7 @@ export default function Admin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [lastSync, setLastSync] = useState(null);
   const refreshShop = useShop((state) => state.load);
   const shop = useShop((state) => state.catalog?.shop);
 
@@ -157,6 +177,7 @@ export default function Admin() {
     setProducts(nextProducts);
     setOrders(nextOrders);
     setStore(nextStore);
+    setLastSync(new Date());
     setReady(true);
   }, []);
   const refresh = async (sessionToken = token) => applyDashboard(await dashboardData(sessionToken));
@@ -313,7 +334,12 @@ export default function Admin() {
   const revenue = orders.filter((order) => order.status === 'delivered').reduce((sum, order) => sum + Number(order.total || 0), 0);
   const lowStock = products.filter((product) => Number(product.stock) <= threshold);
   const totalUnits = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
-  const heading = { overview: 'Dashboard overview', products: 'Products & inventory', orders: 'Customer orders', taxonomy: 'Catalog structure', settings: 'Storefront settings', footer: 'Footer Settings' };
+  const heading = {
+    overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
+    taxonomy: 'Categories & Subcategories', brands: 'Brands / Manufacturers', settings: 'General Settings',
+    footer: 'Footer Settings', banners: 'Flash Sales & Banners', customers: 'Customer Directory',
+    reports: 'Sales Reports', health: 'System Health',
+  };
   const description = {
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
@@ -321,14 +347,17 @@ export default function Admin() {
     taxonomy: 'Create, rename and remove groups, categories and brands.',
     settings: 'Control header branding, homepage banner and inventory alerts.',
     footer: 'Manage support, navigation, contact details, app buttons and social links.',
+    brands: 'Organize your catalog by brand or manufacturer.',
+    banners: 'Edit your homepage banner and manage product offers.',
+    customers: 'Review customer activity from recent orders.',
+    reports: 'Review delivered sales and order counts.',
+    health: 'Check when this session last synchronized with the store API.',
   };
 
   return <div className="console-shell">
     <aside className="console-sidebar">
       <Brand />
-      <nav aria-label="Admin sections" className="console-nav">
-        {sections.map(([key, label, icon]) => <button type="button" key={key} aria-current={tab === key ? 'page' : undefined} onClick={() => switchSection(key)}><Icon name={icon} /> <span>{label}</span></button>)}
-      </nav>
+      <AdminNavigation current={tab} select={switchSection} Icon={Icon} />
       <div className="console-sidebar-actions">
         <a href="./"><Icon name="external" size={17} /> <span>View storefront</span></a>
         <button type="button" onClick={lock} disabled={busy}><Icon name="lock" size={17} /> <span>Sign out</span></button>
@@ -365,15 +394,17 @@ export default function Admin() {
           <div className="console-panel-heading"><div><h2>Recent orders</h2><p>The latest orders received by your store.</p></div><button className="btn" onClick={() => switchSection('orders')}>View all orders</button></div>
           {orders.length ? orders.slice(0, 6).map((order) => <div className="console-row" key={order.order_no}><div><strong>{order.order_no}</strong><small>{order.name}</small></div><Status value={order.status} /></div>) : <p className="console-empty">No orders yet.</p>}
         </section>
-      </> : tab === 'taxonomy' ? (
-        <Taxonomy groups={store.groups} brands={store.brands} busy={busy}
+      </> : tab === 'customers' ? <Customers orders={orders} /> : tab === 'reports' ? <SalesReport orders={orders} /> : tab === 'health' ? (
+        <section className="console-panel"><h2>Store API</h2><p>Last successful data sync: {lastSync?.toLocaleString()}.</p></section>
+      ) : tab === 'taxonomy' || tab === 'brands' ? (
+        <Taxonomy key={tab} initialKind={tab === 'brands' ? 'brand' : 'group'} groups={store.groups} brands={store.brands} busy={busy}
           save={(entry, done) => changeStore('admin.taxonomy.save', entry, 'Catalog entry saved', done)}
           remove={(entry, done) => changeStore('admin.taxonomy.delete', entry, 'Catalog entry deleted', done)} />
       ) : tab === 'footer' ? (
         <AdminFooter settings={store.settings} shop={shop} busy={busy} upload={upload}
           save={(draft) => changeStore('admin.footer.save', draft, 'Footer settings saved')} />
-      ) : tab === 'settings' ? (
-        <StoreSettings initial={store.settings} busy={busy} upload={upload}
+      ) : tab === 'settings' || tab === 'banners' ? (
+        <StoreSettings key={tab} section={tab} initial={store.settings} busy={busy} upload={upload}
           save={(draft) => changeStore('admin.settings.save', draft, 'Storefront settings saved')} />
       ) : (
         <section className="console-panel">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useShop } from '../lib/store';
+import { isOffer } from '../lib/pcBuilder';
 import { ProductCard, Empty } from '../components/ui';
 
 const SORTS = [['new', 'Newest'], ['low', 'Price: low to high'], ['high', 'Price: high to low'], ['name', 'Name']];
@@ -10,7 +11,7 @@ export default function Products() {
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const q = params.get('q') || '', g = params.get('g') || '', c = params.get('c') || '', b = params.get('b') || '';
-  const inStock = params.get('stock') === '1', sort = params.get('sort') || 'new';
+  const offers = params.get('offer') === '1', inStock = params.get('stock') === '1', sort = params.get('sort') || 'new';
   const minPrice = params.get('min') || '', maxPrice = params.get('max') || '';
   const set = (patch) => { const n = new URLSearchParams(params); Object.entries(patch).forEach(([k, v]) => (v ? n.set(k, v) : n.delete(k))); setParams(n, { replace: true }); setOpen(false); };
 
@@ -22,6 +23,7 @@ export default function Products() {
     if (c && p.category_id !== c) return false;
     if (b && p.brand_id !== b) return false;
     if (inStock && !p.in_stock) return false;
+    if (offers && !isOffer(p)) return false;
     if (minPrice !== '' && Number(p.price) < Number(minPrice)) return false;
     if (maxPrice !== '' && Number(p.price) > Number(maxPrice)) return false;
     if (!words.length) return true;
@@ -29,10 +31,10 @@ export default function Products() {
     return words.every((w) => hay.includes(w));
   }).sort((x, y) => sort === 'low' ? x.price - y.price : sort === 'high' ? y.price - x.price : sort === 'name' ? x.name.localeCompare(y.name) : (x.created_at < y.created_at ? 1 : -1)),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  [products, g, c, b, inStock, sort, q, minPrice, maxPrice, brandName, catName]);
+  [products, g, c, b, inStock, offers, sort, q, minPrice, maxPrice, brandName, catName]);
   const count = (pred) => products.filter(pred).length;
   const group = groups.find((x) => x.id === g);
-  const title = q ? `Results for “${q}”` : catName[c] || catName[g] || brandName[b] || c || g || b || (inStock ? 'In-stock products' : 'All products');
+  const title = q ? `Results for “${q}”` : catName[c] || catName[g] || brandName[b] || c || g || b || (offers ? 'Offers' : inStock ? 'In-stock products' : 'All products');
 
   return (
     <>
@@ -72,7 +74,7 @@ export default function Products() {
             {group.categories.map((y) => <button key={y.id} type="button" className={`chip ${c === y.id ? 'on' : ''}`} onClick={() => set({ c: y.id })}>{y.name}</button>)}
           </nav>}
           {list.length ? <div className="grid retail-product-grid">{list.map((p) => <ProductCard key={p.id} p={p} brand={brandName[p.brand_id]} currency={shop.currency} />)}</div>
-            : <Empty title="No products found"><button type="button" className="btn" onClick={() => setParams({}, { replace: true })}>Clear search and filters</button></Empty>}
+            : <Empty title={offers ? "No offers found" : "No products found"}><button type="button" className="btn" onClick={() => setParams({}, { replace: true })}>Clear search and filters</button></Empty>}
         </section>
       </div>
     </>

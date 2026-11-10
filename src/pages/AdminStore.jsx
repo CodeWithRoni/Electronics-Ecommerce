@@ -24,8 +24,8 @@ export function ImageField({ label, value, onChange, upload, busy }) {
   </div>;
 }
 
-export function Taxonomy({ groups, brands, busy, save, remove }) {
-  const [entry, setEntry] = useState(freshEntry);
+export function Taxonomy({ groups, brands, busy, save, remove, initialKind = 'group' }) {
+  const [entry, setEntry] = useState(() => freshEntry(initialKind));
   const categories = groups.flatMap((group) => group.categories.map((category) => ({
     ...category, group_id: group.id, group_name: group.name,
   })));
@@ -72,7 +72,7 @@ export function Taxonomy({ groups, brands, busy, save, remove }) {
   </section>;
 }
 
-export function StoreSettings({ initial, save, upload, busy }) {
+export function StoreSettings({ initial, save, upload, busy, section }) {
   const [draft, setDraft] = useState(initial);
   const change = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const media = (key, label) => <ImageField key={key} label={label} value={draft[key]} onChange={(value) => change(key, value)} upload={upload} busy={busy} />;
@@ -81,8 +81,13 @@ export function StoreSettings({ initial, save, upload, busy }) {
       onChange={(event) => change(key, event.target.value)} />
   </label>;
 
-  return <form className="console-settings" onSubmit={(event) => { event.preventDefault(); save(draft); }}>
-    <section className="console-panel">
+  const bannerFields = ['banner_image', 'banner_title', 'banner_text', 'banner_button', 'banner_link'];
+  const generalFields = ['shop_name', 'low_stock_threshold', 'header_logo', 'favicon'];
+  const isBanner = section === 'banners';
+  return <form className="console-settings" onSubmit={(event) => { event.preventDefault();
+    const keys = isBanner ? bannerFields : generalFields;
+    save(Object.fromEntries(keys.filter((key) => key in draft).map((key) => [key, draft[key]]))); }}>
+    {!isBanner && <section className="console-panel">
       <div className="console-panel-heading"><div><h2>Brand & inventory</h2><p>Use an HTTPS image link or upload directly from your device.</p></div></div>
       <div className="console-settings-grid">
         {field('shop_name', 'Store name', { maxLength: 80, placeholder: 'GearGrid' })}
@@ -90,9 +95,9 @@ export function StoreSettings({ initial, save, upload, busy }) {
         {media('header_logo', 'Header logo')}
         {media('favicon', 'Browser tab icon (favicon)')}
       </div>
-    </section>
-    <section className="console-panel">
-      <div className="console-panel-heading"><div><h2>Homepage banner</h2><p>Empty fields use the default GearGrid banner.</p></div></div>
+    </section>}
+    {isBanner && <section className="console-panel">
+      <div className="console-panel-heading"><div><h2>Homepage banner</h2><p>Empty fields use the default banner. To list a product under Offers, set its regular price above its selling price in Products & inventory.</p></div></div>
       <div className="console-settings-grid">
         {media('banner_image', 'Banner image')}
         {field('banner_title', 'Headline', { maxLength: 100 })}
@@ -100,7 +105,7 @@ export function StoreSettings({ initial, save, upload, busy }) {
         {field('banner_button', 'Button label', { maxLength: 40 })}
         {field('banner_link', 'Button destination', { placeholder: '#/products or https://…' })}
       </div>
-    </section>
+    </section>}
     <div className="console-settings-actions">
       <small>Changes appear on the storefront after you save.</small>
       <button className="btn btn-primary" disabled={busy}>{busy ? 'Working…' : 'Save storefront settings'}</button>

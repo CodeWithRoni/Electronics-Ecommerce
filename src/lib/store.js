@@ -39,6 +39,22 @@ export const useShop = create((set, get) => ({
     write(CART, cart); set({ cart });
     get().toast(`${product.name} added to cart`);
   },
+  addBuild(ids) {
+    const { cart, catalog } = get();
+    const next = new Map(cart.map((line) => [line.product_id, { ...line }]));
+    for (const id of ids) {
+      const product = catalog?.products.find((item) => item.id === id);
+      const qty = Number(next.get(id)?.qty || 0) + 1;
+      if (!product?.in_stock || Number(product.stock) < qty) {
+        return `Not enough stock for ${product?.name || id}, including items already in your cart.`;
+      }
+      next.set(id, { product_id: id, qty });
+    }
+    const updated = [...next.values()];
+    write(CART, updated);
+    set({ cart: updated });
+    return '';
+  },
   remove(product_id) { const cart = get().cart.filter((l) => l.product_id !== product_id); write(CART, cart); set({ cart }); },
   clearCart() { write(CART, []); set({ cart: [] }); },
 

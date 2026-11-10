@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useShop } from './lib/store';
-import { SearchIcon, CartIcon, ThemeIcon, Spinner } from './components/ui';
-import { RetailIcon, shopDepartments } from './components/retail';
+import { Spinner } from './components/ui';
+import { shopDepartments } from './components/retail';
+import StoreHeader from './components/StoreHeader';
 import Home from './pages/Home';
+import PcBuilder from './pages/PcBuilder';
 import StoreFooter from './components/StoreFooter';
 import Products from './pages/Products';
 import Product from './pages/Product';
@@ -61,46 +63,8 @@ function Shell() {
   return (
     <div className="retail-shell">
       {shop?.notice && shop.open && <div className="notice" role="note">{shop.notice}</div>}
-      <div className="retail-utility"><div className="wrap">
-        <span>Computers, components & IT accessories</span>
-        <Link to="/track">Track order <span aria-hidden="true">↗︎</span></Link>
-      </div></div>
-      <header className="top retail-header" onKeyDown={(event) => {
-        if (event.key === 'Escape' && menuOpen) {
-          setMenuOpen(false);
-          event.currentTarget.querySelector('.mobile-menu-toggle')?.focus();
-        }
-      }}>
-        <div className="wrap">
-          <button type="button" className="mobile-menu-toggle" aria-label="Toggle categories" aria-expanded={menuOpen} aria-controls="store-categories" onClick={() => setMenuOpen((open) => !open)}>
-            <RetailIcon name="menu" size={22} />
-          </button>
-          <Link to="/" className="brand retail-brand" aria-label={`${shopName} home`}>
-            {settings.header_logo ? <img className="retail-header-logo" src={settings.header_logo} alt="" /> : <>
-              <span className="retail-brand-mark"><RetailIcon name="bolt" size={24} /></span>
-              <span className="retail-brand-name">{shopName}</span>
-            </>}
-          </Link>
-          <form className="retail-search" role="search" onSubmit={search}>
-            <input type="search" value={q} onChange={(event) => setQ(event.target.value)} placeholder="Search products, brands or models" aria-label="Search products" />
-            <button type="submit" aria-label="Submit product search"><SearchIcon /><span>Search</span></button>
-          </form>
-          <div className="retail-header-actions">
-            <Link to="/wishlist" className="icon-btn" aria-label={`Wishlist, ${favoriteCount} saved`}><RetailIcon name="heart" size={21} />{favoriteCount > 0 && <span className="cart-count">{favoriteCount}</span>}</Link>
-            <button type="button" className="icon-btn retail-theme" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'} title={theme === 'dark' ? 'Light theme' : 'Dark theme'}><ThemeIcon dark={theme === 'dark'} /></button>
-            <Link to="/cart" className="icon-btn" aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}>
-              <CartIcon />{count > 0 && <span className="cart-count">{count > 99 ? '99+' : count}</span>}
-            </Link>
-          </div>
-        </div>
-        <nav id="store-categories" className={`retail-nav ${menuOpen ? 'menu-open' : ''}`} aria-label="Product categories">
-          <div className="wrap">
-            <Link to="/products" className="retail-all"><RetailIcon name="menu" size={17} /> All products</Link>
-            {departments.map(({ name, to }) => <Link key={to} to={to}>{name}</Link>)}
-            <Link to="/track" className="retail-nav-track">Track order</Link>
-          </div>
-        </nav>
-      </header>
+      <StoreHeader settings={settings} name={shopName} departments={departments} q={q} setQ={setQ} search={search}
+        menuOpen={menuOpen} setMenuOpen={setMenuOpen} count={count} favoriteCount={favoriteCount} theme={theme} toggleTheme={toggleTheme} />
       <main>
         <div className="wrap">
           {!catalog ? (error ? <div className="closed"><b>The shop could not be loaded</b><p className="muted">{error}</p><button type="button" className="btn btn-primary" onClick={load}>Try again</button></div> : <Spinner label="Loading the shop" />)
@@ -108,6 +72,7 @@ function Shell() {
             : (
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/pc-builder" element={<PcBuilder />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/p/:id" element={<Product />} />
                 <Route path="/cart" element={<Cart />} />

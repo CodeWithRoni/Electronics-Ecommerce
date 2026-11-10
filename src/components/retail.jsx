@@ -45,6 +45,8 @@ const icons = {
   wallet: <><rect x="2.5" y="5" width="19" height="14" rx="2" /><path d="M3 10h18M6 15h3" /></>,
   heart: <path d="M20.8 5.7a5 5 0 0 0-7.1 0L12 7.4l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21l8.8-8.2a5 5 0 0 0 0-7.1Z" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  gift: <><path d="M4 10h16v11H4zM3 7h18v4H3zM12 7v14" /><path d="M12 7C8 7 6 6 7 4s5 0 5 3Zm0 0c4 0 6-1 5-3s-5 0-5 3Z" /></>,
+  user: <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 21v-2a7.5 7.5 0 0 1 15 0v2Z" /></>,
   phone: <path d="M6 3h3l1.5 4-2 1.8a15 15 0 0 0 6.7 6.7l1.8-2 4 1.5v3c0 1-1 2-2 2C10.2 20 4 13.8 4 5c0-1 .9-2 2-2Z" />,
   pin: <><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.2" /></>,
   playstore: <><path d="M4 3v18l15-9L4 3Zm0 0 11 12M4 21l11-12" /></>,
