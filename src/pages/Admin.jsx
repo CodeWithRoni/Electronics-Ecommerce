@@ -109,7 +109,16 @@ function ProductEditor({ product, groups, brands, attributes = [], upload, exist
     return () => element.close();
   }, []);
 
-  return <dialog ref={dialog} className="console-dialog" aria-labelledby="editor-title" onCancel={(event) => {
+  const renderFields = (fields) => fields.map(([key, label, required, type = 'text']) => (
+    <label key={key} className="field">
+      <span>{label}</span>
+      <input type={type} min={type === 'number' ? 0 : undefined} step={key === 'price' ? '0.01' : undefined}
+        required={required} readOnly={existing && key === 'id'} value={product[key] ?? ''}
+        onChange={(event) => onChange(key, event.target.value)} />
+    </label>
+  ));
+
+  return <dialog ref={dialog} className="console-dialog console-product-dialog" aria-labelledby="editor-title" onCancel={(event) => {
     event.preventDefault();
     if (!busy) onClose();
   }}>
@@ -118,26 +127,33 @@ function ProductEditor({ product, groups, brands, attributes = [], upload, exist
       <button type="button" className="btn" onClick={onClose} disabled={busy}>Close</button>
     </div>
     <form className="console-product-form" onSubmit={(event) => { event.preventDefault(); onSave(); }}>
-      {productFields.map(([key, label, required, type = 'text']) => (
-        <label key={key} className={`field ${key === 'name' ? 'console-wide' : ''}`}>
-          <span>{label}</span>
-          <input type={type} min={type === 'number' ? 0 : undefined} step={key === 'price' ? '0.01' : undefined}
-            required={required} readOnly={existing && key === 'id'} value={product[key] ?? ''}
-            onChange={(event) => onChange(key, event.target.value)} />
-        </label>
-      ))}
-      <label className="field"><span>Group</span><select value={product.group_id || ''} onChange={(event) => onChange('group_id', event.target.value)}>
-        <option value="">No group</option>{groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-      </select></label>
-      <label className="field"><span>Category</span><select disabled={!product.group_id} value={product.category_id || ''} onChange={(event) => onChange('category_id', event.target.value)}>
-        <option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-      </select></label>
-      <label className="field"><span>Brand</span><select value={product.brand_id || ''} onChange={(event) => onChange('brand_id', event.target.value)}>
-        <option value="">No brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
-      </select></label>
-      <label className="field"><span>Regular price before discount (BDT)</span>
-        <input type="number" min="0.01" step="0.01" value={product.compare_at_price ?? ''} onChange={(event) => onChange('compare_at_price', event.target.value)} />
-      </label>
+      <div className="console-wide editor-card-grid">
+        <fieldset className="editor-card">
+          <legend>Basic information</legend>
+          {renderFields(productFields.slice(0, 3))}
+          <label className="field"><span>Group</span><select value={product.group_id || ''} onChange={(event) => onChange('group_id', event.target.value)}>
+            <option value="">No group</option>{groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select></label>
+          <label className="field"><span>Category</span><select disabled={!product.group_id} value={product.category_id || ''} onChange={(event) => onChange('category_id', event.target.value)}>
+            <option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select></label>
+          <label className="field"><span>Brand</span><select value={product.brand_id || ''} onChange={(event) => onChange('brand_id', event.target.value)}>
+            <option value="">No brand</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+          </select></label>
+        </fieldset>
+        <fieldset className="editor-card">
+          <legend>Pricing</legend>
+          {renderFields(productFields.slice(3, 4))}
+          <label className="field"><span>Regular price before discount (BDT)</span>
+            <input type="number" min="0.01" step="0.01" value={product.compare_at_price ?? ''} onChange={(event) => onChange('compare_at_price', event.target.value)} />
+          </label>
+        </fieldset>
+        <fieldset className="editor-card">
+          <legend>Stock &amp; visibility</legend>
+          {renderFields(productFields.slice(4))}
+          <label className="console-visibility"><input type="checkbox" checked={!!product.active} onChange={(event) => onChange('active', event.target.checked)} /> Show on storefront</label>
+        </fieldset>
+      </div>
       <ProductAttributes attributes={attributes} selected={product.attribute_value_ids || []} busy={busy} change={(ids) => onChange('attribute_value_ids', ids)} />
       <fieldset className="console-wide console-builder-fields">
         <legend>PC Builder</legend>
@@ -161,7 +177,6 @@ function ProductEditor({ product, groups, brands, attributes = [], upload, exist
       </fieldset>
       <div className="console-wide"><ImageField label="Product image" value={product.image} onChange={(value) => onChange('image', value)} upload={upload} busy={busy} /></div>
       <label className="field console-wide"><span>Description / specifications</span><textarea value={product.description || ''} onChange={(event) => onChange('description', event.target.value)} /></label>
-      <label className="console-visibility console-wide"><input type="checkbox" checked={!!product.active} onChange={(event) => onChange('active', event.target.checked)} /> Show on storefront</label>
       {error && <p className="console-alert console-wide" role="alert">{error}</p>}
       <div className="console-dialog-actions console-wide">
         <button type="button" className="btn" onClick={onClose} disabled={busy}>Cancel</button>
@@ -185,6 +200,7 @@ export default function Admin() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [store, setStore] = useState({ groups: [], brands: [], settings: {} });
+  const [catalogFilter, setCatalogFilter] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
   const [editor, setEditor] = useState(null);
   const [query, setQuery] = useState('');
@@ -291,6 +307,7 @@ export default function Admin() {
   const switchSection = (section) => {
     if (section !== tab) window.scrollTo(0, 0);
     setTab(section);
+    setCatalogFilter('');
     setQuery('');
     setError('');
     setNotice('');
@@ -349,9 +366,12 @@ export default function Admin() {
   const threshold = store.settings.low_stock_threshold ?? 5;
   const groupNames = Object.fromEntries(store.groups.map((group) => [group.id, group.name]));
   const brandNames = Object.fromEntries(store.brands.map((brand) => [brand.id, brand.name]));
+  const categoryNames = Object.fromEntries(store.groups.flatMap((group) =>
+    (group.categories || []).map((category) => [JSON.stringify([group.id, category.id]), category.name])));
   const filteredProducts = products.filter((product) =>
+    (!catalogFilter || catalogFilter === JSON.stringify([product.group_id]) || catalogFilter === JSON.stringify([product.group_id, product.category_id])) &&
     (stockFilter === 'all' || (stockFilter === 'out' ? Number(product.stock) === 0 : Number(product.stock) <= threshold))
-    && matches([product.name, product.id, product.sku, brandNames[product.brand_id], groupNames[product.group_id]]));
+    && matches([product.name, product.id, product.sku, brandNames[product.brand_id], groupNames[product.group_id], categoryNames[JSON.stringify([product.group_id, product.category_id])]]));
   const filteredOrders = orders.filter((order) => (orderFilter === 'all' || order.status === orderFilter) && matches([order.order_no, order.name, order.phone]));
   const lowStock = products.filter((product) => Number(product.stock) <= threshold);
   const heading = {
@@ -449,6 +469,13 @@ export default function Admin() {
           </div>
           <div className="console-toolbar">
             <input type="search" aria-label="Search admin records" placeholder={tab === 'products' ? 'Search product, model or brand' : 'Search order, name or phone'} value={query} onChange={(event) => setQuery(event.target.value)} />
+            {tab === 'products' && <select aria-label="Filter category" value={catalogFilter} onChange={(event) => setCatalogFilter(event.target.value)}>
+              <option value="">All categories</option>
+              {store.groups.map((group) => <optgroup key={group.id} label={group.name}>
+                <option value={JSON.stringify([group.id])}>All {group.name}</option>
+                {(group.categories || []).map((category) => <option key={category.id} value={JSON.stringify([group.id, category.id])}>{category.name}</option>)}
+              </optgroup>)}
+            </select>}
             {tab === 'products' && <select aria-label="Filter stock" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
               <option value="all">All stock levels</option><option value="low">Low stock</option><option value="out">Out of stock</option>
             </select>}
@@ -457,9 +484,9 @@ export default function Admin() {
           {tab === 'products' ? (
             filteredProducts.length ? <div className="console-table-scroll" tabIndex={0} role="region" aria-label="Product inventory table">
               <table className="console-table"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>Visibility</th><th>Actions</th></tr></thead>
-                <tbody>{filteredProducts.map((product) => <tr key={product.id}><td><strong>{product.name}</strong><small>{[product.id, groupNames[product.group_id], brandNames[product.brand_id]].filter(Boolean).join(' · ')}</small></td><td>{product.sku || '—'}</td><td>{money(product.price, 'BDT')}</td><td>{Number(product.stock) <= threshold ? <Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={`${product.stock} left`} /> : product.stock}</td><td><Status value={product.active ? 'delivered' : 'hidden'} label={product.active ? 'Visible' : 'Hidden'} /></td><td><div className="console-row-actions"><button className="btn" disabled={busy} onClick={() => openEditor(product)}>Edit</button><button className="btn console-danger" disabled={busy} onClick={() => deleteProduct(product)}>Delete</button></div></td></tr>)}</tbody>
+                <tbody>{filteredProducts.map((product) => <tr key={product.id}><td><strong>{product.name}</strong><small>{[product.id, groupNames[product.group_id], brandNames[product.brand_id]].filter(Boolean).join(' · ')}</small></td><td>{product.sku || '—'}</td><td>{money(product.price, 'BDT')}</td><td>{Number(product.stock) <= threshold ? <Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={Number(product.stock) === 0 ? 'Out of stock' : `${product.stock} left`} /> : product.stock}</td><td><Status value={product.active ? 'delivered' : 'hidden'} label={product.active ? 'Visible' : 'Hidden'} /></td><td><div className="console-row-actions"><button className="btn" disabled={busy} aria-label={`Edit ${product.name}`} onClick={() => openEditor(product)}><Icon name="edit" size={15} /> Edit</button><button className="btn console-danger" disabled={busy} onClick={() => deleteProduct(product)}>Delete</button></div></td></tr>)}</tbody>
               </table>
-            </div> : <p className="console-empty">{products.length ? 'No products match your search.' : 'No products yet. Add your first product to the catalog.'}</p>
+            </div> : <p className="console-empty">{products.length ? 'No products match your filters.' : 'No products yet. Add your first product to the catalog.'}</p>
           ) : (
             filteredOrders.length ? <div className="console-table-scroll" tabIndex={0} role="region" aria-label="Customer orders table">
               <table className="console-table"><thead><tr><th>Order</th><th>Customer</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead>
