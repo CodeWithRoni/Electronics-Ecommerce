@@ -17,6 +17,7 @@ export default function AdminOverview({
     if (Object.hasOwn(counts, order.status)) counts[order.status]++;
   }
   const urgentStock = [...lowStock].sort((a, b) => Number(a.stock) - Number(b.stock));
+  const outOfStock = urgentStock.filter((product) => Number(product.stock) === 0).length;
   const units = products.reduce((total, item) => total + Number(item.stock || 0), 0);
   const metrics = [
     { label: 'Catalog products', value: products.length, detail: `${units.toLocaleString()} units in inventory`, icon: 'box', action: () => openInventory() },
@@ -73,7 +74,10 @@ export default function AdminOverview({
 
       <section className="console-panel overview-panel">
         <div className="console-panel-heading"><div><h2>Low stock alerts</h2><p>Out-of-stock products appear first.</p></div>
-          <button type="button" className="btn" onClick={() => openInventory('low')}>Manage stock</button></div>
+          <div className="console-row-actions">
+            {outOfStock > 0 && <button type="button" className="btn" onClick={() => openInventory('out')}>Out of stock ({outOfStock})</button>}
+            <button type="button" className="btn" onClick={() => openInventory('low')}>Manage stock</button>
+          </div></div>
         {urgentStock.length ? urgentStock.slice(0, 5).map((product) => <div className="console-row" key={product.id}>
           <button type="button" className="overview-order-link" disabled={busy} onClick={() => openProduct(product)}>{product.name}</button>
           <Status value={Number(product.stock) === 0 ? 'cancelled' : 'new'} label={Number(product.stock) === 0 ? 'Out of stock' : `${product.stock} left`} />
