@@ -9,8 +9,8 @@ const sections = [
   ['content', 'Content Management', 'footer', [[null, 'Pages'], [null, 'Blog / Articles'], ['media', 'Media Library'], ['footer', 'Footer Settings']]],
   ['financials', 'Financials & Reports', 'reports', [['reports', 'Sales Reports'], [null, 'Tax & Shipping Reports'], [null, 'Payouts & Ledger']]],
   ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], ['registrationEmail', 'Registration Email'], [null, 'Payment Gateways'], [null, 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
-  ['access', 'Access Control & Security', 'lock', [[null, 'Admin Users'], [null, 'Roles & Permissions'], [null, 'Activity Logs']]],
-  ['maintenance', 'System Maintenance', 'stock', [[null, 'Cache & Optimization'], [null, 'Backup & Restore'], ['health', 'System Health']]],
+  ['access', 'Access Control & Security', 'shield', [[null, 'Admin Users'], [null, 'Roles & Permissions'], [null, 'Activity Logs']]],
+  ['maintenance', 'System Maintenance', 'maintenance', [[null, 'Cache & Optimization'], [null, 'Backup & Restore'], ['health', 'System Health']]],
 ];
 
 export default function AdminNavigation({ current, select, Icon }) {
@@ -26,7 +26,7 @@ export default function AdminNavigation({ current, select, Icon }) {
       {sections.map(([id, title, icon, pages]) => <section className="console-nav-group" key={id}>
         <button className="console-nav-heading" type="button" aria-expanded={expanded === id} aria-controls={`admin-nav-${id}`}
           data-current={activeGroup === id} onClick={() => setExpanded((open) => open === id ? '' : id)}>
-          <Icon name={icon} size={17} /><span>{title}</span><span className="console-chevron" aria-hidden="true">⌄</span>
+          <span className="console-nav-icon" data-group={id}><Icon name={icon} size={17} /></span><span>{title}</span><span className="console-chevron"><Icon name="chevron" size={14} /></span>
         </button>
         <ul id={`admin-nav-${id}`} hidden={expanded !== id}>
           {pages.map(([page, label]) => <li key={label}>{page ? <button type="button" aria-current={page === current ? 'page' : undefined} onClick={() => {

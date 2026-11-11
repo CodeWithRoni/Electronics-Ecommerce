@@ -22,6 +22,9 @@ const productFields = [
   ['stock', 'Stock quantity', true, 'number'],
 ];
 const paths = {
+  chevron: 'm6 9 6 6 6-6',
+  shield: 'M12 22s7-3.5 7-10V5l-7-3-7 3v7c0 6.5 7 10 7 10Zm-3-10 2 2 4-4',
+  maintenance: 'M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   dashboard: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   box: 'm12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Zm0 18v-9m-9-4.5 9 4.5 9-4.5M7.5 5.3l9 4.5',
   stock: 'M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6',

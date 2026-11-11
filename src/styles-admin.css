@@ -261,7 +261,7 @@
 
 /* Admin overview */
 .console-sidebar { background: linear-gradient(160deg, #17243c, var(--console-navy) 62%); }
-.console-nav-heading[data-current="true"] { background: #253049; }
+
 .console-page-heading[data-overview="true"] { padding-bottom: 2px; }
 .overview-hero {
   position: relative; isolation: isolate; overflow: hidden;
@@ -355,4 +355,45 @@
   .overview-hero { gap: 14px; }
   .overview-table td, .overview-table th { padding-inline: 7px; }
   .overview-status-label { gap: 5px; }
+}
+
+.console-group-nav { gap: 5px; }
+.console-group-nav .console-nav-heading {
+  min-height: 46px;
+  gap: 9px;
+  padding: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: .005em;
+}
+.console-nav-heading[data-current="true"] { background: #25344e; color: #fff; }
+.console-nav-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: #b7ccf6;
+  background: #243552;
+}
+.console-nav-icon:is([data-group="catalog"], [data-group="orders"]) { color: #a9e4db; background: #203d48; }
+.console-nav-icon:is([data-group="marketing"], [data-group="financials"]) { color: #ffd1ab; background: #493644; }
+.console-nav-icon:is([data-group="crm"], [data-group="content"]) { color: #dac9fa; background: #353555; }
+.console-nav-heading[data-current="true"] .console-nav-icon { color: #ffe1d4; background: #594052; }
+.console-chevron { display: grid; flex: none; transition: transform .16s ease; }
+.console-nav-group ul { margin-left: 20px; padding-left: 11px; }
+.console-nav-group li > button { font-size: 12px; font-weight: 650; line-height: 1.4; }
+.console-nav-group li > button[aria-current="page"] {
+  border-color: transparent;
+  background: #343147;
+  box-shadow: inset 2px 0 #ff9b7e;
+  color: #ffe0d6;
+}
+.console-group-nav button:focus-visible, .console-menu-toggle:focus-visible {
+  outline: 2px solid #a9c9ff;
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-chevron { transition: none; }
 }
