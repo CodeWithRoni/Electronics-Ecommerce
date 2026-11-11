@@ -252,6 +252,15 @@
 
 .retail-shell .retail-header-v2 { background: #0b1823; }
 .retail-header-v2 > .wrap { gap: clamp(11px, 1.55vw, 23px); min-height: 72px; }
+@media screen and (width > 900px) {
+  .retail-shell .retail-header-v2 {
+    --desktop-header-row-height: 74px;
+    position: sticky;
+    top: calc(-1 * var(--desktop-header-row-height));
+    z-index: 40;
+  }
+  .retail-header-v2 > .wrap { height: var(--desktop-header-row-height); }
+}
 .retail-header-v2 .retail-brand { flex: 0 1 154px; }
 .retail-header-v2 .retail-header-logo { width: 138px; height: 42px; }
 .retail-header-v2 .retail-search { padding: 0; border-radius: 6px; }
