@@ -8,6 +8,7 @@ import { money } from '../lib/format';
 import { ImageField, StoreSettings } from './AdminStore';
 import AdminFooter from './AdminFooter';
 import AdminNavigation from './AdminNavigation';
+import AdminUtilities from './AdminUtilities';
 import AdminOverview from './AdminOverview';
 import { Customers, SalesReport } from './AdminInsights';
 import { LiveMonitoring, MediaLibrary, OrderDocuments } from './AdminOperations';
@@ -354,6 +355,7 @@ export default function Admin() {
   const filteredOrders = orders.filter((order) => (orderFilter === 'all' || order.status === orderFilter) && matches([order.order_no, order.name, order.phone]));
   const lowStock = products.filter((product) => Number(product.stock) <= threshold);
   const heading = {
+    ledger: 'Order Payment Ledger', gateways: 'Payment Gateways', shipping: 'Shipping & Zones', cache: 'Storefront Cache',
     overview: 'Dashboard overview', products: 'Products & inventory', orders: 'All Orders',
     registrationEmail: 'Registration Email',
     taxonomy: 'Categories & Subcategories', settings: 'General Settings',
@@ -362,6 +364,10 @@ export default function Admin() {
     documents: 'Invoices & Slips', segments: 'Customer Segments', media: 'Media Library',
   };
   const description = {
+    ledger: 'Review recorded payment methods and statuses for recent orders.',
+    gateways: 'Inspect the payment methods enabled at checkout.',
+    shipping: 'Inspect the delivery zones and rates shown at checkout.',
+    cache: 'Manage the storefront catalog cache in this browser.',
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
     orders: 'Find customer orders and update their fulfillment status.',
@@ -397,7 +403,8 @@ export default function Admin() {
       {error && !editor && <p className="console-alert" role="alert">{error}</p>}
       {notice && <p className="console-notice" role="status">{notice}</p>}
 
-      {tab === 'overview' ? <AdminOverview Icon={Icon} Status={Status} statuses={statuses} shopName={store.settings.shop_name || brandName}
+      {['ledger', 'gateways', 'shipping', 'cache'].includes(tab) ? <AdminUtilities key={tab} tab={tab} orders={orders} />
+        : tab === 'overview' ? <AdminOverview Icon={Icon} Status={Status} statuses={statuses} shopName={store.settings.shop_name || brandName}
         products={products} orders={orders} lowStock={lowStock} threshold={threshold} lastSync={lastSync} busy={busy}
         addProduct={() => openEditor()} openProduct={openEditor}
         openOrders={(filter = 'all', search = '') => { switchSection('orders'); setOrderFilter(filter); setQuery(search); }}

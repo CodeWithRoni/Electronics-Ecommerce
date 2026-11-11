@@ -7,10 +7,10 @@ const sections = [
   ['crm', 'Customer Relationship Management', 'user', [['customers', 'Customer Directory'], ['segments', 'Customer Segments'], [null, 'Support Tickets']]],
   ['marketing', 'Marketing & Promotions', 'gift', [[null, 'Discounts & Coupons'], ['banners', 'Flash Sales & Banners'], [null, 'Email & SMS Campaigns']]],
   ['content', 'Content Management', 'footer', [[null, 'Pages'], [null, 'Blog / Articles'], ['media', 'Media Library'], ['footer', 'Footer Settings']]],
-  ['financials', 'Financials & Reports', 'reports', [['reports', 'Sales Reports'], [null, 'Tax & Shipping Reports'], [null, 'Payouts & Ledger']]],
-  ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], ['registrationEmail', 'Registration Email'], [null, 'Payment Gateways'], [null, 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
+  ['financials', 'Financials & Reports', 'reports', [['reports', 'Sales Reports'], [null, 'Tax & Shipping Reports'], ['ledger', 'Order Payment Ledger'], [null, 'Payouts']]],
+  ['settings', 'System Configurations & Settings', 'settings', [['settings', 'General Settings'], ['registrationEmail', 'Registration Email'], ['gateways', 'Payment Gateways'], ['shipping', 'Shipping & Zones'], [null, 'Tax Rules'], [null, 'Notifications']]],
   ['access', 'Access Control & Security', 'shield', [[null, 'Admin Users'], [null, 'Roles & Permissions'], [null, 'Activity Logs']]],
-  ['maintenance', 'System Maintenance', 'maintenance', [[null, 'Cache & Optimization'], [null, 'Backup & Restore'], ['health', 'System Health']]],
+  ['maintenance', 'System Maintenance', 'maintenance', [['cache', 'Storefront Cache'], [null, 'Backup & Restore'], ['health', 'System Health']]],
 ];
 
 export default function AdminNavigation({ current, select, Icon }) {

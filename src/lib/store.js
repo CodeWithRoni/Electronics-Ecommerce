@@ -18,6 +18,11 @@ export const useShop = create((set, get) => ({
   theme: read(THEME, null) || systemTheme(),
   toasts: [],
 
+  clearCatalogCache() {
+    localStorage.removeItem(CATALOG);
+    set({ catalog: null, error: '' });
+  },
+
   async load() {
     if (get().loading) return;
     set({ loading: true, error: '' });
