@@ -204,14 +204,14 @@ function EditProfile({ user }) {
     const emailChanged = email.toLowerCase() !== user.email?.toLowerCase();
     save.run(async () => {
       if (!data.first_name || !data.last_name) throw new Error('Enter both your first and last name.');
-      if (!/^\+?\d{8,15}$/.test(data.phone)) throw new Error('Enter a valid telephone number.');
+      if (!/^\+?\d{8,15}$/.test(data.phone)) throw new Error('Enter a valid mobile number.');
       await updateUser(emailChanged ? { data, email } : { data }, { emailRedirectTo: accountRedirect('confirmed') });
     }, emailChanged ? 'Profile saved. Check your inbox for the email change confirmation.' : 'Your profile has been saved.');
   }}>
     <div className="account-name-fields"><Field label="First Name" name="first_name" showRequired autoComplete="given-name" maxLength={80} defaultValue={profile.first_name} />
       <Field label="Last Name" name="last_name" showRequired autoComplete="family-name" maxLength={80} defaultValue={profile.last_name} /></div>
     <Field label="E-Mail" name="email" showRequired type="email" autoComplete="email" maxLength={254} defaultValue={user.email} />
-    <Field label="Telephone" name="phone" showRequired type="tel" autoComplete="tel" maxLength={24} defaultValue={profile.phone || user.phone} />
+    <Field label="Mobile" name="phone" showRequired type="tel" autoComplete="tel" maxLength={24} defaultValue={profile.phone || user.phone} />
     <Field label="Fax" name="fax" type="tel" maxLength={24} defaultValue={profile.fax} required={false} />
     <button className="account-primary" disabled={save.busy}>Save Changes</button><SaveFeedback save={save} />
   </form>;
@@ -269,7 +269,7 @@ function AddressBook({ profile, name }) {
     }}>
       <h2>{editing.id ? 'Edit Address' : 'New Address'}</h2>
       <Field label="Recipient Name" name="name" defaultValue={editing.name ?? name} autoComplete="name" maxLength={120} />
-      <Field label="Telephone" name="phone" type="tel" defaultValue={editing.phone ?? profile.phone} autoComplete="tel" maxLength={24} />
+      <Field label="Mobile" name="phone" type="tel" defaultValue={editing.phone ?? profile.phone} autoComplete="tel" maxLength={24} />
       <Field label="Street Address" name="street" defaultValue={editing.street} autoComplete="street-address" maxLength={220} />
       <div className="account-name-fields"><Field label="City or District" name="city" defaultValue={editing.city} autoComplete="address-level2" maxLength={80} />
         <Field label="Postcode" name="postcode" defaultValue={editing.postcode} autoComplete="postal-code" maxLength={16} required={false} /></div>

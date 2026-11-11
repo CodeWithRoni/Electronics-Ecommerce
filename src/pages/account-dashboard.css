@@ -14,9 +14,17 @@
 .account-dashboard h2 { font-size: 18px; }
 .account-dashboard .account-primary { width: fit-content; white-space: normal; }
 .account-panel { min-width: 0; padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
-.account-welcome { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 14px; }
+.account-welcome { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 14px; }
 .account-welcome-person, .account-welcome-banner, .account-stat { display: flex; align-items: center; gap: 16px; }
-.account-welcome-person { min-height: 118px; overflow-wrap: anywhere; }
+.account-welcome-person { min-height: 118px; gap: clamp(8px, 1.3vw, 16px); overflow-wrap: anywhere; }
+.account-welcome-person > div { flex: 1; min-width: 0; }
+.account-welcome-person .account-avatar { width: clamp(36px, 4vw, 52px); height: clamp(36px, 4vw, 52px); }
+.account-welcome-person h1 {
+  font-size: clamp(16px, 1.65vw, 23px);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow-x: auto;
+}
 .account-avatar, .account-tile-icon { display: inline-grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 50%; color: #3546b4; background: #e9edfb; }
 .account-avatar { font-weight: 800; }
 .account-welcome-banner { padding: 20px 26px; border-radius: 10px; color: #fff; background: radial-gradient(ellipse at 85% 105%, #697bf2 0%, transparent 62%), #3346ab; text-decoration: none; }

@@ -69,7 +69,7 @@ export default function Account({ page, shop, settings, session }) {
     const get = (name) => String(data.get(name) || '');
     if (register && !details) {
       const phone = get('phone').trim().replace(/[\s()-]/g, '');
-      if (!/^\+?\d{8,15}$/.test(phone)) { setError('Enter a valid telephone number.'); return; }
+      if (!/^\+?\d{8,15}$/.test(phone)) { setError('Enter a valid mobile number.'); return; }
       const first_name = get('first_name').trim(), last_name = get('last_name').trim();
       if (!first_name || !last_name) { setError('Enter both your first and last name.'); return; }
       setDetails({ email: get('email').trim(), first_name, last_name, phone });
@@ -111,7 +111,7 @@ export default function Account({ page, shop, settings, session }) {
     <section className="account-form" aria-labelledby="account-heading">
       <h1 id="account-heading">{title}</h1>
       {page === 'privacy' ? <>
-        <p>{shop.name} uses your name, email and telephone to manage your account and communicate with you about it. Account credentials are managed by Supabase Auth. When you place an order, your contact and delivery details are used to fulfill it.</p>
+        <p>{shop.name} uses your name, email and mobile number to manage your account and communicate with you about it. Account credentials are managed by Supabase Auth. When you place an order, your contact and delivery details are used to fulfill it.</p>
         {footer.email && <p>For privacy requests, email <a href={`mailto:${footer.email}`}>{footer.email}</a>.</p>}
         <Link to="/account/register">Return to registration</Link>
       </> : session === undefined ? <p role="status">Loading account…</p> : reset && !session ? <p>This reset link is unavailable or expired. <Link to="/account/forgot">Request a new link</Link>.</p> :
@@ -122,7 +122,7 @@ export default function Account({ page, shop, settings, session }) {
               <Field label="Last Name" name="last_name" showRequired autoComplete="family-name" maxLength={80} />
             </div>
             <Field label="E-Mail" name="email" showRequired type="email" autoComplete="email" maxLength={254} />
-            <Field label="Telephone" name="phone" showRequired type="tel" autoComplete="tel" maxLength={24} />
+            <Field label="Mobile" name="phone" showRequired type="tel" autoComplete="tel" maxLength={24} />
             <div className="account-consent"><label><input type="checkbox" name="consent" required /> I have read and agree to the</label>{privacyLink ? <a href={privacyLink} target="_blank" rel="noreferrer">Privacy Policy</a> : <a href="#/account/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>}</div>
           </> : (register || reset) ? <>
             <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} maxLength={72} />
