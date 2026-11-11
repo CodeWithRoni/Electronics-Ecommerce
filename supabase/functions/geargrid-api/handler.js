@@ -8,7 +8,7 @@ const phoneNorm = (value) => String(value || '').replace(/\D/g, '').replace(/^88
 
 export function createHandler(env, db, auth, consoleData, upload) {
   const allowed = env.ALLOWED_ORIGIN || 'https://codewithroni.github.io';
-  const shop = {
+  const defaults = {
     name: env.SHOP_NAME || 'GearGrid', open: true, currency: 'BDT',
     address: env.SHOP_ADDRESS || '', phone: env.SHOP_PHONE || '', email: env.SHOP_EMAIL || '',
     notice: '', cod: true, bkash: { enabled: Boolean(env.BKASH_NUMBER), number: env.BKASH_NUMBER || '', type: 'personal' },
@@ -24,6 +24,15 @@ export function createHandler(env, db, auth, consoleData, upload) {
   const ok = (data) => reply({ ok: true, data });
   const fail = (error, status = 400) => reply({ ok: false, error }, status);
 
+  function configuredShop(settings) {
+    return {
+      ...defaults,
+      name: settings.shop_name || defaults.name,
+      delivery: settings.shipping_zones || defaults.delivery,
+      bkash: { ...defaults.bkash, ...settings.manual_bkash },
+    };
+  }
+
   async function catalog() {
     const [results, { settings, groups, brands, attributes = [] }] = await Promise.all([db('catalog'), consoleData('snapshot')]);
     const threshold = settings.low_stock_threshold ?? 5;
@@ -33,10 +42,10 @@ export function createHandler(env, db, auth, consoleData, upload) {
     }));
     const storefrontSettings = { ...settings };
     delete storefrontSettings.registration_email;
-    return { shop: { ...shop, name: settings.shop_name || shop.name }, products, groups, brands, attributes, settings: storefrontSettings };
+    return { shop: configuredShop(settings), products, groups, brands, attributes, settings: storefrontSettings };
   }
 
-  function createOrder(payload, customerId) {
+  async function createOrder(payload, customerId) {
     const phone = phoneNorm(payload.phone);
     const name = String(payload.name || '').trim();
     const address = String(payload.address || '').trim();
@@ -44,6 +53,8 @@ export function createHandler(env, db, auth, consoleData, upload) {
       throw new Error('Valid name, phone and address are required');
     if (!Array.isArray(payload.items) || !payload.items.length || payload.items.length > 100)
       throw new Error('Invalid cart');
+    const { settings } = await consoleData('snapshot');
+    const shop = configuredShop(settings);
     if (payload.payment !== 'cod' && !(payload.payment === 'bkash' && shop.bkash.enabled))
       throw new Error('Invalid payment method');
     const clientRef = String(payload.client_ref || '');
@@ -79,6 +90,20 @@ export function createHandler(env, db, auth, consoleData, upload) {
         if (!settings.registration_email) throw new Error('Save the registration email settings before publishing');
         return publishRegistrationEmail(env, settings.registration_email);
       });
+      case 'admin.shipping.save': {
+        const { inside, outside, inside_label } = payload;
+        const label = typeof inside_label === 'string' ? inside_label.trim() : '';
+        if (!label || label.length > 80 || ![inside, outside].every((rate) => Number.isSafeInteger(rate) && rate >= 0 && rate <= 100000))
+          throw new Error('Enter a zone name and whole-number delivery rates between 0 and 100,000 BDT.');
+        return consoleData('settings_patch', { shipping_zones: { inside, outside, inside_label: label } });
+      }
+      case 'admin.bkash.save': {
+        const { enabled, type } = payload;
+        const number = phoneNorm(payload.number);
+        if (typeof enabled !== 'boolean' || !['personal', 'merchant'].includes(type) || ((enabled || number) && !/^01[3-9]\d{8}$/.test(number)))
+          throw new Error('Enter a valid bKash number and account type.');
+        return consoleData('settings_patch', { manual_bkash: { enabled, number, type } });
+      }
       case 'admin.settings.save': return consoleData('settings_patch', cleanSettings(payload));
       case 'admin.footer.save': return consoleData('settings_patch', { footer: cleanFooter(payload) });
       case 'admin.taxonomy.import': {

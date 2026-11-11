@@ -365,8 +365,8 @@ export default function Admin() {
   };
   const description = {
     ledger: 'Review recorded payment methods and statuses for recent orders.',
-    gateways: 'Inspect the payment methods enabled at checkout.',
-    shipping: 'Inspect the delivery zones and rates shown at checkout.',
+    gateways: 'Manage the payment methods enabled at checkout.',
+    shipping: 'Manage the delivery zones and rates shown at checkout.',
     cache: 'Manage the storefront catalog cache in this browser.',
     overview: 'Review your latest orders, sales and stock levels.',
     products: 'Manage your catalog, prices, stock and storefront visibility.',
@@ -403,7 +403,7 @@ export default function Admin() {
       {error && !editor && <p className="console-alert" role="alert">{error}</p>}
       {notice && <p className="console-notice" role="status">{notice}</p>}
 
-      {['ledger', 'gateways', 'shipping', 'cache'].includes(tab) ? <AdminUtilities key={tab} tab={tab} orders={orders} />
+      {['ledger', 'gateways', 'shipping', 'cache'].includes(tab) ? <AdminUtilities key={tab} tab={tab} orders={orders} busy={busy} save={(action, draft) => changeStore(action, draft, 'Checkout settings saved')} />
         : tab === 'overview' ? <AdminOverview Icon={Icon} Status={Status} statuses={statuses} shopName={store.settings.shop_name || brandName}
         products={products} orders={orders} lowStock={lowStock} threshold={threshold} lastSync={lastSync} busy={busy}
         addProduct={() => openEditor()} openProduct={openEditor}
