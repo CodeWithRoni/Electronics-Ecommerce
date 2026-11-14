@@ -1,4 +1,4 @@
-/* Karvio Shop — same look as Karvio ERP (colours, fonts, buttons), laid out for shoppers. */
+/* GearGrid storefront — shared theme tokens and base styles. */
 :root, [data-theme='dark'] {
   --rack: #0f1d2b;
   --panel: #16283a;

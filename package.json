@@ -2,7 +2,7 @@
   "name": "electronics-ecommerce",
   "private": true,
   "version": "2.0.0",
-  "description": "Independent electronics marketplace with Cloudflare D1 and secure admin panel",
+  "description": "GearGrid electronics storefront and admin panel on Supabase",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -49,7 +49,9 @@ export function createHandler(env, db, auth, consoleData, upload) {
     const phone = phoneNorm(payload.phone);
     const name = String(payload.name || '').trim();
     const address = String(payload.address || '').trim();
-    if (!name || !/^01\d{9}$/.test(phone) || address.length < 8)
+    // Bots fill the hidden "company" field; people never see it.
+    if (String(payload.company || '').trim()) throw new Error('Your order could not be placed. Please try again.');
+    if (!name || !/^01[3-9]\d{8}$/.test(phone) || address.length < 8)
       throw new Error('Valid name, phone and address are required');
     if (!Array.isArray(payload.items) || !payload.items.length || payload.items.length > 100)
       throw new Error('Invalid cart');
@@ -216,6 +218,7 @@ export function createHandler(env, db, auth, consoleData, upload) {
         return ok(await createOrder(payload, customerId));
       }
       if (action === 'admin.sign_in') return ok(await auth.signIn(payload.login, payload.password));
+      if (action === 'admin.refresh_session') return ok(await auth.refresh(payload.refresh_token));
       if (typeof action === 'string' && action.startsWith('admin.')) {
         if (!await auth.canManage(request.headers.get('Authorization'))) return fail('Unauthorized', 401);
         return ok(await admin(action, payload));
@@ -223,7 +226,7 @@ export function createHandler(env, db, auth, consoleData, upload) {
       return fail('Unknown action', 404);
     } catch (error) {
       const message = error.message || 'Internal server error';
-      if (message === 'Invalid username, email or password') return fail(message, 401);
+      if (message === 'Invalid username, email or password' || message === 'Your session has expired. Sign in again.') return fail(message, 401);
       if (message === 'Too many sign-in attempts. Try again shortly.') return fail(message, 429);
       return fail(message, message.endsWith('temporarily unavailable') ? 503 : 400);
     }

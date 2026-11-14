@@ -1,4 +1,12 @@
 const rejected = () => new Error('Invalid username, email or password');
+const expired = () => new Error('Your session has expired. Sign in again.');
+
+// The admin panel needs the refresh token so it can renew the short-lived access token.
+const adminSession = (session) => ({
+  access_token: session.access_token,
+  refresh_token: session.refresh_token,
+  expires_at: session.expires_at || Math.floor(Date.now() / 1000) + (Number(session.expires_in) || 3600),
+});
 
 export function createAdminAuth(url, publicKey, serverKey, lookup) {
   async function authRequest(path, { key = publicKey, token, body } = {}) {
@@ -45,7 +53,16 @@ export function createAdminAuth(url, publicKey, serverKey, lookup) {
       const session = await authRequest('token?grant_type=password', { body: { email, password } });
       if (!session?.access_token || !session.user?.id) throw rejected();
       if (!(await lookup({ p_user_id: session.user.id }))?.allowed) throw rejected();
-      return { access_token: session.access_token };
+      return adminSession(session);
+    },
+
+    async refresh(refreshToken) {
+      if (typeof refreshToken !== 'string' || !refreshToken || refreshToken.length > 1024) throw expired();
+      const session = await authRequest('token?grant_type=refresh_token', { body: { refresh_token: refreshToken } });
+      if (!session?.access_token || !session.user?.id) throw expired();
+      // Removing the allowlist row revokes access, even for a session that is being renewed.
+      if (!(await lookup({ p_user_id: session.user.id }))?.allowed) throw expired();
+      return adminSession(session);
     },
 
     customerId,

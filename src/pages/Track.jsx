@@ -29,7 +29,7 @@ export default function Track() {
     <div style={{ maxWidth: 680, margin: '0 auto', display: 'grid', gap: 16 }}>
       <div className="page-title"><h1>Track your order</h1></div>
       <form className="card form-grid" onSubmit={find}>
-        <label className="field"><span>Order number</span><input value={no} onChange={(e) => setNo(e.target.value)} placeholder="WO-000123" autoCapitalize="characters" /></label>
+        <label className="field"><span>Order number</span><input value={no} onChange={(e) => setNo(e.target.value)} placeholder="EE-XXXXXXXXXXXX" autoCapitalize="characters" /></label>
         <label className="field"><span>Mobile number</span><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="01XXXXXXXXX" /></label>
         <div className="wide"><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Finding…' : 'Find my order'}</button></div>
         {err && <div className="errbox wide" role="alert">{err}</div>}

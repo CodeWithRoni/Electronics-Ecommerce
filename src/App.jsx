@@ -68,8 +68,8 @@ function Shell() {
 
   const settings = catalog?.settings || {};
   useEffect(() => {
-    const icon = document.createElement('link');
     if (!settings.favicon) return;
+    const icon = document.createElement('link');
     icon.rel = 'icon';
     icon.href = settings.favicon;
     document.head.append(icon);

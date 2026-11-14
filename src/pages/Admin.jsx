@@ -71,15 +71,29 @@ async function request(token, action, payload = {}) {
 }
 
 const sessionKey = `geargrid_admin_session:${API_URL}`;
+// { access_token, refresh_token, expires_at (seconds) }. Older builds stored the bare access token.
 function savedSession() {
-  try { return sessionStorage.getItem(sessionKey) || ''; }
-  catch { return ''; }
-}
-function saveSession(token) {
   try {
-    if (token) sessionStorage.setItem(sessionKey, token);
+    const value = sessionStorage.getItem(sessionKey) || '';
+    if (!value) return null;
+    if (!value.startsWith('{')) return { access_token: value };
+    const session = JSON.parse(value);
+    return session?.access_token ? session : null;
+  } catch { return null; }
+}
+function saveSession(session) {
+  try {
+    if (session) sessionStorage.setItem(sessionKey, JSON.stringify(session));
     else sessionStorage.removeItem(sessionKey);
   } catch { /* Admin access still works in memory if storage is unavailable. */ }
+}
+const renewalMargin = 120; // seconds before expiry
+const needsRenewal = (session) => Boolean(session?.refresh_token && session.expires_at
+  && session.expires_at - renewalMargin <= Date.now() / 1000);
+async function renewSession(session) {
+  const next = await request('', 'admin.refresh_session', { refresh_token: session.refresh_token });
+  saveSession(next);
+  return next;
 }
 
 function dashboardData(token) {
@@ -189,7 +203,8 @@ function ProductEditor({ product, groups, brands, attributes = [], upload, exist
 export default function Admin() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState(savedSession);
+  const [session, setSession] = useState(savedSession);
+  const token = session?.access_token || '';
   const [restoring, setRestoring] = useState(Boolean(token));
   const [restoreAttempt, setRestoreAttempt] = useState(0);
   const [ready, setReady] = useState(false);
@@ -224,23 +239,46 @@ export default function Admin() {
   useEffect(() => {
     if (!token || ready) return;
     let active = true;
-    dashboardData(token).then((data) => {
+    (async () => {
+      const current = needsRenewal(session) ? await renewSession(session) : session;
+      const data = await dashboardData(current.access_token);
+      return [current, data];
+    })().then(([current, data]) => {
       if (!active) return;
+      if (current !== session) setSession(current);
       setRestoring(false);
       applyDashboard(data);
     }).catch((failure) => {
       if (!active) return;
       setRestoring(false);
       if (failure.status === 401) {
-        saveSession('');
-        setToken('');
+        saveSession(null);
+        setSession(null);
         setError('Your session has expired. Sign in again.');
       } else {
         setError('Could not restore your session. Try again.');
       }
     });
     return () => { active = false; };
-  }, [token, ready, restoreAttempt, applyDashboard]);
+  }, [session, token, ready, restoreAttempt, applyDashboard]);
+
+  // Supabase access tokens last about an hour; renew shortly before expiry so admins stay signed in.
+  const [renewAttempt, setRenewAttempt] = useState(0);
+  useEffect(() => {
+    if (!ready || !session?.refresh_token || !session.expires_at) return;
+    let active = true;
+    const delay = Math.max(0, (session.expires_at - renewalMargin) * 1000 - Date.now());
+    const timer = setTimeout(() => {
+      renewSession(session).then((next) => { if (active) setSession(next); }).catch((failure) => {
+        if (!active) return;
+        if (failure.status === 401) {
+          lock();
+          setError('Your session has expired. Sign in again.');
+        } else setTimeout(() => active && setRenewAttempt((attempt) => attempt + 1), 30000);
+      });
+    }, Math.min(delay, 2147483647));
+    return () => { active = false; clearTimeout(timer); };
+  }, [ready, session, renewAttempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (action) => {
     setBusy(true);
@@ -259,10 +297,10 @@ export default function Admin() {
     const credentials = { login, password };
     setPassword('');
     return run(async () => {
-      const session = await request('', 'admin.sign_in', credentials);
-      await refresh(session.access_token);
-      saveSession(session.access_token);
-      setToken(session.access_token);
+      const next = await request('', 'admin.sign_in', credentials);
+      await refresh(next.access_token);
+      saveSession(next);
+      setSession(next);
     });
   };
   const save = () => run(async () => {
@@ -313,8 +351,8 @@ export default function Admin() {
     setNotice('');
   };
   const lock = () => {
-    saveSession('');
-    setToken('');
+    saveSession(null);
+    setSession(null);
     setRestoring(false);
     setPassword('');
     setReady(false);
